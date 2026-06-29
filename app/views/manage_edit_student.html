@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo"><img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo"></div>
+            <div class="ms-3"><span class="navbar-brand-text mb-0">{{ role_title }}</span></div>
+        </div>
+        <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+    </div>
+</nav>
+{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:600px;">
+    <a href="/dashboard/{{ user.role_id }}" class="text-primary-academic fw-bold mb-3 d-inline-block">← Back to Dashboard</a>
+    <h2 class="text-primary-academic fw-bold mb-4">Edit Student</h2>
+    <div class="card-academic">
+        <form action="/manage/student/edit/{{ student.id }}" method="POST">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label-academic">First Name *</label>
+                    <input type="text" name="first_name" required value="{{ student.first_name }}" class="form-control-academic">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-academic">Last Name *</label>
+                    <input type="text" name="last_name" required value="{{ student.last_name }}" class="form-control-academic">
+                </div>
+                <div class="col-12">
+                    <label class="form-label-academic">Middle Name</label>
+                    <input type="text" name="middle_name" value="{{ student.middle_name or '' }}" class="form-control-academic">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-academic">Email</label>
+                    <input type="email" name="email" value="{{ student.email or '' }}" class="form-control-academic">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-academic">External ID</label>
+                    <input type="text" name="external_id" value="{{ student.external_id or '' }}" class="form-control-academic">
+                </div>
+                <div class="col-12 text-end mt-3">
+                    <a href="/dashboard/{{ user.role_id }}" class="btn btn-secondary-academic me-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary-academic">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

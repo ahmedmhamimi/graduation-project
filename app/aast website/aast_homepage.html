@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AASTMT — Alamein Branch | Timetable System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #0a1f44; --deep-blue: #112d6e; --gold: #c9a84c;
+      --light-gold: #e8c97a; --white: #ffffff; --light-gray: #f4f6f9;
+      --mid-gray: #8892a4; --text-dark: #1a1a2e;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Barlow', sans-serif; color: var(--text-dark); background: var(--white); overflow-x: hidden; }
+
+    /* ══════════════════════════════════════════
+       GLOBAL ANIMATIONS
+    ══════════════════════════════════════════ */
+    @keyframes fadeUp    { from { opacity:0; transform:translateY(32px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeLeft  { from { opacity:0; transform:translateX(-32px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes fadeRight { from { opacity:0; transform:translateX(32px);  } to { opacity:1; transform:translateX(0); } }
+    @keyframes scaleIn   { from { opacity:0; transform:scale(0.9);  } to { opacity:1; transform:scale(1);   } }
+    @keyframes pulse     { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.05);opacity:0.7;} }
+    @keyframes blink     { 0%,100%{opacity:1} 50%{opacity:0} }
+    @keyframes shimmer   { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+    @keyframes floatY    { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-10px)} }
+    @keyframes goldGlow  { 0%,100%{text-shadow:0 0 12px rgba(201,168,76,0.3);} 50%{text-shadow:0 0 28px rgba(201,168,76,0.7), 0 0 50px rgba(201,168,76,0.25);} }
+    @keyframes rotateSlow{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes slideInUp { from{opacity:0;transform:translateY(60px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes numberPop { 0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
+    @keyframes borderGlow{ 0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0);} 50%{box-shadow:0 0 0 4px rgba(201,168,76,0.25);} }
+
+    .reveal       { opacity:0; transform:translateY(18px); transition:opacity 0.5s ease, transform 0.5s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+    .reveal-left  { opacity:0; transform:translateX(-22px); transition:opacity 0.5s ease, transform 0.5s ease; }
+    .reveal-left.visible { opacity:1; transform:translateX(0); }
+    .reveal-right { opacity:0; transform:translateX(22px);  transition:opacity 0.5s ease, transform 0.5s ease; }
+    .reveal-right.visible { opacity:1; transform:translateX(0); }
+    .reveal-scale { opacity:0; transform:scale(0.96); transition:opacity 0.45s ease, transform 0.45s ease; }
+    .reveal-scale.visible { opacity:1; transform:scale(1); }
+
+    /* ══ TIMETABLE BANNER ══ */
+    .timetable-banner {
+      background: linear-gradient(160deg, #040c1e 0%, #0a1f44 45%, #0d2660 100%);
+      position: relative; overflow: hidden;
+    }
+    .timetable-banner::before {
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background: repeating-linear-gradient(90deg,transparent,transparent 72px,rgba(255,255,255,0.015) 72px,rgba(255,255,255,0.015) 73px),
+                  repeating-linear-gradient(0deg,transparent,transparent 72px,rgba(255,255,255,0.015) 72px,rgba(255,255,255,0.015) 73px);
+    }
+    .timetable-banner::after {
+      content:''; position:absolute; left:-120px; top:-120px;
+      width:420px; height:420px; border-radius:50%;
+      background: radial-gradient(circle, rgba(201,168,76,0.09) 0%, transparent 70%);
+      pointer-events:none; animation: pulse 7s ease-in-out infinite;
+    }
+    .timetable-banner .tb-glow-right {
+      position:absolute; right:-100px; bottom:-100px;
+      width:340px; height:340px; border-radius:50%;
+      background: radial-gradient(circle, rgba(17,45,110,0.7) 0%, transparent 70%);
+      pointer-events:none;
+    }
+    .timetable-banner-inner {
+      max-width:900px; margin:0 auto; padding:28px 40px;
+      display:flex; flex-direction:column; align-items:center;
+      text-align:center; gap:10px; position:relative; z-index:2;
+    }
+    .tb-icon-row {
+      display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:4px;
+    }
+    .timetable-icon-wrap {
+      width:48px; height:48px; border-radius:11px;
+      background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14);
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+      backdrop-filter:blur(8px); animation: floatY 4s ease-in-out infinite;
+    }
+    .tb-line {
+      width: 40px; height: 1px; background: rgba(201,168,76,0.4); border-radius:1px;
+    }
+    .timetable-system-title {
+      font-family:'Barlow Condensed', sans-serif;
+      font-size:clamp(28px,4vw,46px); font-weight:700; color:var(--white);
+      letter-spacing:4px; text-transform:uppercase; line-height:1;
+      position:relative; overflow:hidden;
+    }
+    .timetable-system-title::after {
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.09) 50%,transparent 100%);
+      background-size:700px 100%; animation: shimmer 3.5s linear infinite;
+      pointer-events:none;
+    }
+    .powered-row {
+      font-family:'Barlow', sans-serif; font-size:14px; font-weight:400;
+      letter-spacing:0.4px; color:rgba(255,255,255,0.42);
+      display:flex; align-items:center; justify-content:center; gap:10px;
+    }
+    .title-divider { width:1px; height:14px; background:rgba(255,255,255,0.2); border-radius:1px; flex-shrink:0; }
+    .unitime-badge {
+      background:rgba(201,168,76,0.16); border:1px solid rgba(201,168,76,0.42);
+      color:var(--gold); font-family:'Barlow Condensed', sans-serif;
+      font-size:14px; font-weight:700; letter-spacing:2.5px; padding:2px 12px; border-radius:4px;
+      animation: goldGlow 2.5s ease-in-out infinite;
+    }
+    .timetable-sub {
+      font-size:12px; color:rgba(255,255,255,0.26); letter-spacing:0.5px;
+      border-top:1px solid rgba(255,255,255,0.07); padding-top:10px; margin-top:2px;
+      width:100%;
+    }
+
+    /* ══ TOP BAR ══ */
+    .top-bar {
+      background:var(--navy); padding:7px 40px;
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:12px; color:rgba(255,255,255,0.7);
+    }
+    .top-bar a { color:rgba(255,255,255,0.7); text-decoration:none; margin-left:16px; transition:color .2s; }
+    .top-bar a:hover { color:var(--gold); }
+    .top-bar-left span { margin-right:20px; }
+    .top-bar-left span::before { content:'📞 '; }
+    .top-bar-left span:last-child::before { content:'✉ '; }
+
+    /* ══ NAVBAR ══ */
+    nav {
+      background:var(--white); padding:0 40px;
+      display:flex; align-items:center; justify-content:space-between;
+      box-shadow:0 2px 20px rgba(0,0,0,0.08);
+      position:sticky; top:0; z-index:1000; height:72px;
+    }
+    .logo { display:flex; align-items:center; gap:14px; text-decoration:none; }
+    .logo-icon {
+      display:inline-block; width:54px; height:54px; border-radius:50%;
+      background:white; border:2px solid rgba(10,31,68,0.15);
+      box-shadow:0 0 0 5px rgba(10,31,68,0.06); transition:transform .3s, box-shadow .3s;
+    }
+    .logo-icon:hover { transform:scale(1.06); box-shadow:0 0 0 9px rgba(10,31,68,0.1); }
+    .logo-icon img { width:100%; height:100%; object-fit:contain; }
+    .logo-text { line-height:1.2; }
+    .logo-text strong { display:block; font-family:'Barlow Condensed', sans-serif; font-size:18px; font-weight:700; color:var(--navy); letter-spacing:1px; }
+    .logo-text span { font-size:10px; color:var(--mid-gray); letter-spacing:0.5px; text-transform:uppercase; }
+    .nav-links { display:flex; list-style:none; gap:4px; align-items:center; }
+    .nav-links a { display:block; padding:9px 15px; text-decoration:none; color:var(--navy); font-weight:500; font-size:14px; border-radius:6px; transition:all .2s; position:relative; }
+    .nav-links a:hover { background:var(--light-gray); color:var(--deep-blue); }
+    .nav-links a.active { color:var(--gold); font-weight:600; }
+    .nav-links a.active::after { content:''; position:absolute; bottom:4px; left:50%; transform:translateX(-50%); width:20px; height:2px; background:var(--gold); border-radius:2px; }
+    .nav-cta { background:var(--gold); color:var(--navy) !important; font-weight:700 !important; border-radius:6px; padding:9px 20px !important; }
+    .nav-cta:hover { background:var(--light-gold) !important; }
+
+    /* ══ HERO ══ */
+    .hero { position:relative; min-height:90vh; display:flex; align-items:center; overflow:hidden; background:var(--navy); }
+    .hero-bg { position:absolute; inset:0; overflow:hidden; }
+    .slide { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0; transform:scale(1.04); transition:none; }
+    .slide::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(10,31,68,0.94) 0%,rgba(17,45,110,0.8) 50%,rgba(10,31,68,0.9) 100%); }
+    .slide.active { opacity:1; transform:scale(1); transition:opacity 1.4s ease, transform 8s ease; }
+    .slider-dots { position:absolute; bottom:28px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:10; }
+    .slider-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.32); cursor:pointer; transition:all .3s; border:none; padding:0; }
+    .slider-dot.active { background:var(--gold); width:28px; border-radius:4px; }
+    #particles-canvas { position:absolute; inset:0; z-index:1; pointer-events:none; }
+    .hero-geo  { position:absolute; right:-100px; top:-100px; width:700px; height:700px; border:120px solid rgba(201,168,76,0.07); border-radius:50%; animation:pulse 8s ease-in-out infinite; }
+    .hero-geo-2{ position:absolute; right:50px; bottom:-200px; width:500px; height:500px; border:80px solid rgba(201,168,76,0.04); border-radius:50%; animation:pulse 10s ease-in-out infinite reverse; }
+    .hero-content { position:relative; z-index:2; max-width:1200px; margin:0 auto; padding:60px 40px; display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; width:100%; }
+    .hero-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      background:rgba(201,168,76,0.14); border:1px solid rgba(201,168,76,0.38);
+      color:var(--gold); padding:6px 16px; border-radius:40px;
+      font-size:12px; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+      margin-bottom:20px; animation:fadeUp 0.6s ease both;
+    }
+    .hero-badge::before { content:'⚓'; }
+
+    .hero-timetable-label {
+      display:inline-flex; align-items:center; gap:10px; margin-bottom:18px;
+      background:rgba(10,31,68,0.6); border:1px solid rgba(201,168,76,0.3);
+      backdrop-filter:blur(10px); padding:8px 20px; border-radius:8px;
+      animation:fadeUp 0.6s 0.08s ease both;
+    }
+    .hero-timetable-label .ht-main {
+      font-family:'Barlow Condensed', sans-serif; font-size:22px; font-weight:700;
+      color:var(--white); letter-spacing:2px; text-transform:uppercase;
+      animation: goldGlow 3s ease-in-out infinite;
+    }
+    .hero-timetable-label .ht-badge {
+      background:var(--gold); color:var(--navy); font-family:'Barlow Condensed', sans-serif;
+      font-size:11px; font-weight:700; letter-spacing:2px; padding:3px 10px; border-radius:4px;
+    }
+
+    .hero-title {
+      font-family:'Playfair Display', serif; font-size:clamp(32px,4vw,54px);
+      font-weight:900; color:var(--white); line-height:1.1; margin-bottom:8px;
+      animation:fadeUp 0.6s 0.15s ease both;
+    }
+    .hero-title em { font-style:normal; color:var(--gold); display:block; min-height:1.2em; animation: goldGlow 3s ease-in-out infinite; }
+    .typing-cursor { display:inline-block; width:3px; background:var(--gold); margin-left:4px; animation:blink .75s step-end infinite; vertical-align:middle; height:0.85em; border-radius:2px; }
+
+    .hero-tagline {
+      font-size:14px; color:rgba(255,255,255,0.5); margin-top:12px; margin-bottom:0;
+      font-style:italic; letter-spacing:0.3px; animation:fadeUp 0.6s 0.3s ease both;
+      font-family:'Playfair Display', serif;
+    }
+
+    .hero-stats-card {
+      background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+      backdrop-filter:blur(14px); border-radius:20px; padding:36px;
+      animation:fadeUp 0.6s 0.25s ease both;
+    }
+    .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+    .stat-item { text-align:center; padding:18px; background:rgba(255,255,255,0.04); border-radius:12px; transition:background .3s; animation: borderGlow 3s ease-in-out infinite; }
+    .stat-item:hover { background:rgba(255,255,255,0.09); }
+    .stat-number { font-family:'Playfair Display', serif; font-size:34px; font-weight:900; color:var(--gold); line-height:1; margin-bottom:5px; animation: goldGlow 3s ease-in-out infinite; }
+    .stat-label { font-size:11px; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:0.8px; }
+    .hero-stats-card h3 { font-family:'Playfair Display', serif; color:var(--white); font-size:20px; margin-bottom:24px; text-align:center; }
+    .hero-stats-card h3 span { color:var(--gold); }
+    .btn-primary { background:var(--gold); color:var(--navy); padding:13px 30px; border-radius:8px; text-decoration:none; font-weight:700; font-size:14px; letter-spacing:0.5px; transition:all .3s; display:inline-flex; align-items:center; gap:8px; }
+    .btn-primary:hover { background:var(--light-gold); transform:translateY(-2px); box-shadow:0 8px 24px rgba(201,168,76,0.32); }
+
+    /* ══ STATS BAR ══ */
+    .stats-bar { background:var(--deep-blue); padding:26px 40px; display:flex; justify-content:center; gap:56px; flex-wrap:wrap; }
+    .stats-bar-item { text-align:center; color:var(--white); }
+    .stats-bar-item .num { font-family:'Barlow Condensed', sans-serif; font-size:30px; font-weight:700; color:var(--gold); animation: goldGlow 2s ease-in-out infinite; }
+    .stats-bar-item .lbl { font-size:11px; opacity:0.65; text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+
+    /* ══ BRANCH HEADER ══ */
+    .branch-header { background:linear-gradient(135deg,var(--navy) 0%,var(--deep-blue) 100%); padding:50px 40px; position:relative; overflow:hidden; }
+    .branch-header::before { content:''; position:absolute; left:-60px; top:-60px; width:280px; height:280px; border:55px solid rgba(201,168,76,0.07); border-radius:50%; animation:rotateSlow 40s linear infinite; }
+    .branch-header::after  { content:''; position:absolute; right:60px; bottom:-80px; width:220px; height:220px; border:45px solid rgba(201,168,76,0.05); border-radius:50%; animation:rotateSlow 30s linear infinite reverse; }
+    .branch-header-inner { max-width:1200px; margin:0 auto; position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; text-align:center; gap:28px; }
+    .branch-eyebrow { font-family:'Barlow Condensed', sans-serif; font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); display:flex; align-items:center; gap:10px; }
+    .branch-eyebrow::before,.branch-eyebrow::after { content:''; display:inline-block; width:28px; height:2px; background:var(--gold); border-radius:2px; }
+    .branch-title { font-family:'Playfair Display', serif; font-size:clamp(44px,5.5vw,72px); font-weight:900; color:var(--white); line-height:1; letter-spacing:-0.5px; }
+    .branch-title span { color:var(--gold); animation: goldGlow 3s ease-in-out infinite; }
+    .branch-tagline { font-size:14px; color:rgba(255,255,255,0.42); letter-spacing:0.3px; }
+    .branch-meta { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+    .branch-meta-item { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.11); border-radius:12px; padding:14px 22px; text-align:center; min-width:110px; transition: transform .3s, background .3s; }
+    .branch-meta-item:hover { transform:translateY(-4px); background:rgba(255,255,255,0.1); }
+    .branch-meta-num { font-family:'Barlow Condensed', sans-serif; font-size:26px; font-weight:700; color:var(--gold); line-height:1; }
+    .branch-meta-lbl { font-size:11px; color:rgba(255,255,255,0.42); text-transform:uppercase; letter-spacing:0.8px; margin-top:4px; }
+
+    /* ══ SECTION COMMON ══ */
+    section { padding:72px 40px; }
+    .container { max-width:1200px; margin:0 auto; }
+    .section-label { font-size:11px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold); margin-bottom:10px; }
+    .section-title { font-family:'Playfair Display', serif; font-size:clamp(26px,3vw,40px); font-weight:700; color:var(--navy); margin-bottom:14px; line-height:1.2; }
+    .section-desc { font-size:15px; color:var(--mid-gray); max-width:560px; line-height:1.8; }
+    .section-head { margin-bottom:46px; }
+
+    /* ══ PROGRAMS — FIXED 4-COLUMN GRID ══ */
+    .programs { background:var(--light-gray); }
+    .programs-grid {
+      display:grid;
+      grid-template-columns:repeat(4, 1fr);
+      gap:22px;
+    }
+
+    /* Every direct child (the <a> wrappers) must fill its grid cell */
+    .programs-grid > a {
+      display:flex;
+      text-decoration:none;
+      color:inherit;
+    }
+
+    .program-card {
+      background:var(--white); border-radius:16px; overflow:hidden;
+      transition:all .35s cubic-bezier(.25,.8,.25,1); cursor:pointer;
+      border:1px solid transparent; display:flex; flex-direction:column;
+      width:100%;
+    }
+    .program-card:hover { transform:translateY(-8px) scale(1.01); box-shadow:0 24px 60px rgba(10,31,68,0.14); border-color:var(--gold); }
+    .program-icon-header { height:155px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+    .program-icon-header svg { transition:transform .45s ease; position:relative; z-index:1; }
+    .program-card:hover .program-icon-header svg { transform:scale(1.12) translateY(-5px); }
+    .program-icon-header::after { content:''; position:absolute; inset:0; background:linear-gradient(to top,rgba(10,31,68,0.22) 0%,transparent 55%); }
+    .c-eng  .program-icon-header { background:linear-gradient(135deg,#0d2a5a,#1a4080); }
+    .c-ai   .program-icon-header { background:linear-gradient(135deg,#0d3d2e,#1a6b5a); }
+    .c-mgmt .program-icon-header { background:linear-gradient(135deg,#3d1a0d,#7a3515); }
+    .c-phrm .program-icon-header { background:linear-gradient(135deg,#1a0d3d,#3b1a7a); }
+    .c-lgst .program-icon-header { background:linear-gradient(135deg,#0d3030,#1a5c5c); }
+    .c-dent .program-icon-header { background:linear-gradient(135deg,#1a2a0d,#3a5a1a); }
+    .c-med  .program-icon-header { background:linear-gradient(135deg,#3d0d0d,#7a1a1a); }
+    .c-pt   .program-icon-header { background:linear-gradient(135deg,#0d1a3d,#1a3070); }
+    .college-tag { position:absolute; top:12px; left:12px; font-family:'Barlow Condensed', sans-serif; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,0.62); background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.14); padding:3px 9px; border-radius:40px; z-index:2; backdrop-filter:blur(6px); }
+
+    /* AI College portal highlight */
+    .program-card.ai-college { border:2px solid var(--gold); position:relative; }
+    .program-card.ai-college .program-body::after {
+      content:'AI Timetable Portal →';
+      display:block; margin-top:10px;
+      background: linear-gradient(135deg, var(--navy), var(--deep-blue));
+      color: var(--gold);
+      text-align: center;
+      padding: 9px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .program-body { padding:20px 22px; flex:1; display:flex; flex-direction:column; }
+    .program-body h3 { font-family:'Barlow Condensed', sans-serif; font-size:18px; font-weight:700; color:var(--navy); margin-bottom:7px; letter-spacing:0.3px; }
+    .program-body p { font-size:13px; color:var(--mid-gray); line-height:1.7; margin-bottom:14px; flex:1; }
+    .program-link { font-size:13px; font-weight:700; color:var(--gold); text-decoration:none; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:6px; transition:gap .2s; }
+    .program-link:hover { gap:10px; }
+
+    /* Programs responsive */
+    @media(max-width:1100px){ .programs-grid { grid-template-columns:repeat(2, 1fr); } }
+    @media(max-width:600px){ .programs-grid { grid-template-columns:1fr; } }
+
+    /* ══ HIGHLIGHTS ══ */
+    .highlights { background:var(--white); padding:72px 40px; }
+    .highlights-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+    @media(max-width:900px){ .highlights-grid{grid-template-columns:1fr 1fr;} }
+
+    .hl-card {
+      background:var(--navy); border-radius:18px; padding:30px 24px;
+      position:relative; overflow:hidden; transition:transform .35s, box-shadow .35s;
+      border:1px solid rgba(201,168,76,0.12);
+    }
+    .hl-card:hover { transform:translateY(-6px); box-shadow:0 20px 50px rgba(10,31,68,0.22); }
+    .hl-card::before {
+      content:''; position:absolute; right:-30px; top:-30px;
+      width:140px; height:140px; border:28px solid rgba(201,168,76,0.07); border-radius:50%;
+      transition: transform .4s;
+    }
+    .hl-card:hover::before { transform:scale(1.2); }
+    .hl-icon { font-size:28px; margin-bottom:16px; }
+    .hl-num {
+      font-family:'Playfair Display', serif; font-size:52px; font-weight:900;
+      color:var(--gold); line-height:1; margin-bottom:8px;
+      animation: goldGlow 3s ease-in-out infinite;
+    }
+    .hl-label { font-size:14px; color:rgba(255,255,255,0.75); font-weight:600; margin-bottom:10px; }
+    .hl-desc { font-size:12px; color:rgba(255,255,255,0.42); line-height:1.7; }
+    .hl-bar-wrap { margin-top:16px; background:rgba(255,255,255,0.08); border-radius:4px; height:4px; overflow:hidden; }
+    .hl-bar { height:100%; background:linear-gradient(90deg,var(--gold),var(--light-gold)); border-radius:4px; width:0; transition:width 1.4s cubic-bezier(.4,0,.2,1); }
+    .hl-card.in-view .hl-bar { width:var(--bar-w, 80%); }
+
+    /* ══ BRAND STRIP ══ */
+    .brand-strip { background:var(--white); border-top:1px solid #edf1f6; border-bottom:1px solid #edf1f6; padding:20px 40px; }
+    .brand-strip-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:36px; flex-wrap:wrap; }
+    .brand-strip img { max-height:68px; width:auto; object-fit:contain; }
+    .brand-note { font-size:13px; color:var(--mid-gray); font-style:italic; max-width:400px; text-align:center; line-height:1.7; }
+
+    /* ══ IMPACT / ABOUT ══ */
+    .about-grid { display:grid; grid-template-columns:1.05fr 0.95fr; gap:28px; align-items:center; }
+    .about-card { background:var(--white); border:1px solid #eaecf0; border-radius:18px; overflow:hidden; box-shadow:0 10px 30px rgba(10,31,68,0.06); }
+    .about-card img { width:100%; height:100%; object-fit:cover; display:block; }
+    .info-card { background:var(--white); border:1px solid #eaecf0; border-radius:18px; padding:28px; box-shadow:0 10px 30px rgba(10,31,68,0.06); }
+    .info-card p { font-size:14px; color:var(--mid-gray); line-height:1.9; margin-bottom:16px; }
+    .feature-list { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:18px; }
+    .feature-item { background:var(--light-gray); border-radius:10px; padding:13px 15px; font-size:13px; color:var(--navy); font-weight:600; transition:background .2s, transform .2s; }
+    .feature-item:hover { background:#e0e6f0; transform:translateX(4px); }
+
+    /* ══ RANKING HIGHLIGHT ══ */
+    .highlight-grid { display:grid; grid-template-columns:1.2fr 0.8fr; gap:28px; align-items:stretch; }
+    .rank-card { background:var(--white); border:1px solid #eaecf0; border-radius:18px; overflow:hidden; box-shadow:0 10px 30px rgba(10,31,68,0.06); }
+    .rank-card .news-body h3 { font-size:24px; }
+    .rank-mini { display:grid; gap:16px; }
+    .rank-stat {
+      background:linear-gradient(135deg,var(--navy) 0%,var(--deep-blue) 100%);
+      color:var(--white); border-radius:18px; padding:24px;
+      position:relative; overflow:hidden; transition:transform .3s;
+    }
+    .rank-stat:hover { transform:translateX(5px); }
+    .rank-stat::after { content:''; position:absolute; right:-30px; top:-30px; width:140px; height:140px; border:26px solid rgba(201,168,76,0.08); border-radius:50%; }
+    .rank-stat strong { display:block; font-family:'Playfair Display', serif; font-size:42px; color:var(--gold); line-height:1; margin-bottom:7px; animation:goldGlow 3s ease-in-out infinite; }
+    .rank-stat span { font-size:13px; color:rgba(255,255,255,0.7); line-height:1.7; display:block; }
+
+    /* ══ VISUAL GALLERY ══ */
+    .visual-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+    .visual-card { position:relative; min-height:240px; border-radius:18px; overflow:hidden; box-shadow:0 10px 30px rgba(10,31,68,0.06); }
+    .visual-card img { width:100%; height:100%; object-fit:cover; transition:transform .5s ease; display:block; }
+    .visual-card:hover img { transform:scale(1.06); }
+    .visual-card .overlay { position:absolute; inset:auto 0 0 0; padding:18px; background:linear-gradient(to top,rgba(10,31,68,0.88),rgba(10,31,68,0)); color:var(--white); transform:translateY(10px); transition:transform .3s; }
+    .visual-card:hover .overlay { transform:translateY(0); }
+    .visual-card .overlay h3 { font-family:'Barlow Condensed', sans-serif; font-size:17px; letter-spacing:0.4px; margin-bottom:5px; }
+    .visual-card .overlay p { font-size:12px; color:rgba(255,255,255,0.7); line-height:1.6; }
+
+    /* ══ NEWS ══ */
+    .news-grid { display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:26px; }
+    .news-card { background:var(--white); border-radius:14px; overflow:hidden; border:1px solid #eaecf0; transition:all .35s; }
+    .news-card:hover { box-shadow:0 14px 44px rgba(10,31,68,0.11); transform:translateY(-5px); }
+    .news-img { height:200px; background:var(--light-gray); overflow:hidden; }
+    .news-card.featured .news-img { height:270px; }
+    .news-img img { width:100%; height:100%; object-fit:cover; transition:transform .45s; }
+    .news-card:hover .news-img img { transform:scale(1.05); }
+    .news-body { padding:20px; }
+    .news-tag { display:inline-block; background:rgba(201,168,76,0.12); color:var(--gold); font-size:11px; font-weight:700; padding:4px 10px; border-radius:40px; letter-spacing:0.8px; text-transform:uppercase; margin-bottom:11px; }
+    .news-body h3 { font-family:'Playfair Display', serif; font-size:17px; font-weight:700; color:var(--navy); margin-bottom:9px; line-height:1.35; }
+    .news-card.featured .news-body h3 { font-size:22px; }
+    .news-body p { font-size:13px; color:var(--mid-gray); line-height:1.7; margin-bottom:14px; }
+    .news-date { font-size:12px; color:var(--mid-gray); }
+
+    /* ══ CTA BAND ══ */
+    .cta-band {
+      background:linear-gradient(135deg,var(--navy) 0%,var(--deep-blue) 100%);
+      padding:70px 40px; text-align:center; position:relative; overflow:hidden;
+    }
+    .cta-band::before { content:''; position:absolute; top:-80px; left:50%; transform:translateX(-50%); width:600px; height:600px; border:80px solid rgba(201,168,76,0.05); border-radius:50%; animation:pulse 8s ease-in-out infinite; }
+    .cta-band h2 { font-family:'Playfair Display', serif; font-size:clamp(26px,3.5vw,44px); color:var(--white); margin-bottom:14px; position:relative; }
+    .cta-band p { color:rgba(255,255,255,0.6); font-size:16px; position:relative; }
+
+    /* ══ FOOTER ══ */
+    footer { background:#060f22; color:rgba(255,255,255,0.6); padding:62px 40px 28px; }
+    .footer-grid { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:44px; margin-bottom:46px; }
+    .footer-brand p { font-size:14px; line-height:1.8; margin:14px 0 20px; }
+    .footer-socials { display:flex; gap:10px; }
+    .footer-socials a { width:34px; height:34px; background:rgba(255,255,255,0.07); border-radius:8px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px; transition:background .2s; }
+    .footer-socials a:hover { background:var(--gold); }
+    .footer-col h4 { font-family:'Barlow Condensed', sans-serif; font-size:13px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--white); margin-bottom:18px; padding-bottom:9px; border-bottom:2px solid var(--gold); display:inline-block; }
+    .footer-col ul { list-style:none; }
+    .footer-col ul li { margin-bottom:9px; }
+    .footer-col ul a { text-decoration:none; color:rgba(255,255,255,0.52); font-size:13px; transition:color .2s; }
+    .footer-col ul a:hover { color:var(--gold); }
+    .footer-bottom { max-width:1200px; margin:0 auto; padding-top:22px; border-top:1px solid rgba(255,255,255,0.07); display:flex; justify-content:space-between; align-items:center; font-size:12px; flex-wrap:wrap; gap:12px; }
+
+    /* Responsive */
+    @media(max-width:900px){
+      .hero-content,.about-grid,.highlight-grid { grid-template-columns:1fr; gap:32px; }
+      .hero-stats-card,.visual-grid { display:none; }
+      .news-grid,.footer-grid { grid-template-columns:1fr; }
+      nav { padding:0 20px; }
+      .nav-links { display:none; }
+      .timetable-banner-inner { padding:14px 20px; flex-wrap:wrap; }
+      .branch-meta { justify-content:center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ TIMETABLE SYSTEM BANNER ══ -->
+<div class="timetable-banner">
+  <div class="tb-glow-right"></div>
+  <div class="timetable-banner-inner">
+    <div class="tb-icon-row">
+      <div class="tb-line"></div>
+      <div class="timetable-icon-wrap">
+        <svg width="26" height="26" viewBox="0 0 30 30" fill="none">
+          <rect x="3" y="5" width="24" height="21" rx="3" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+          <line x1="3" y1="11" x2="27" y2="11" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+          <line x1="9" y1="2.5" x2="9" y2="8" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>
+          <line x1="21" y1="2.5" x2="21" y2="8" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>
+          <rect x="7" y="15" width="4" height="3" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+          <rect x="13" y="15" width="4" height="3" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+          <rect x="19" y="15" width="4" height="3" rx="0.5" fill="#c9a84c"/>
+          <rect x="7" y="20" width="4" height="3" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+          <rect x="13" y="20" width="4" height="3" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+          <rect x="19" y="20" width="4" height="3" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+        </svg>
+      </div>
+      <div class="tb-line"></div>
+    </div>
+    <div class="timetable-system-title">Timetable System</div>
+    <div class="powered-row">
+      Powered by
+      <div class="title-divider"></div>
+      <span class="unitime-badge">UniTime</span>
+    </div>
+    <div class="timetable-sub">Intelligent academic scheduling &amp; course management platform &nbsp;·&nbsp; Alamein Branch</div>
+  </div>
+</div>
+
+<!-- Top Bar -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <span>+20 3 5622395</span>
+    <span>info@aast.edu</span>
+  </div>
+</div>
+
+<!-- Navbar -->
+<nav>
+  <a href="/" class="logo">
+    <div class="logo-icon"><img src="/aast-assets/aast_logo.png" alt="AASTMT Logo"></div>
+    <div class="logo-text">
+      <strong>AASTMT</strong>
+      <span>Arab Academy for Science &amp; Technology</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#home" class="active">Home</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#colleges">Colleges</a></li>
+    <li><a href="#highlights">Highlights</a></li>
+    <li><a href="#news">News</a></li>
+    <li><a href="#contact" class="nav-cta">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero" id="home">
+  <div class="hero-bg">
+    <div class="slide active" style="background-image:url('/aast-assets/graduation.webp')"></div>
+    <div class="slide" style="background-image:url('/aast-assets/aastmt_banner.jpg')"></div>
+    <div class="slide" style="background-image:url('/aast-assets/acpc2024.webp')"></div>
+    <div class="slide" style="background-image:url('/aast-assets/graduation-students.webp')"></div>
+    <div class="slide" style="background-image:url('/aast-assets/sdg-2025.jpg')"></div>
+  </div>
+  <canvas id="particles-canvas"></canvas>
+  <div class="hero-geo"></div>
+  <div class="hero-geo-2"></div>
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="hero-timetable-label">
+        <span class="ht-main">Timetable System</span>
+        <span class="ht-badge">UniTime</span>
+      </div>
+      <div class="hero-badge">Accredited &middot; Since 1972</div>
+      <h1 class="hero-title">
+        Advancing Scholarship &amp;<br>Academic Distinction in<br>
+        <em><span id="typing-text"></span><span class="typing-cursor"></span></em>
+      </h1>
+      <p class="hero-tagline">"Where rigour meets innovation — shaping the intellect of tomorrow."</p>
+    </div>
+    <div class="hero-stats-card">
+      <h3>Why Choose <span>AASTMT</span>?</h3>
+      <div class="stat-grid">
+        <div class="stat-item"><div class="stat-number">50+</div><div class="stat-label">Years of Excellence</div></div>
+        <div class="stat-item"><div class="stat-number">120+</div><div class="stat-label">Academic Programs</div></div>
+        <div class="stat-item"><div class="stat-number">6</div><div class="stat-label">Campuses in Egypt</div></div>
+        <div class="stat-item"><div class="stat-number">80K+</div><div class="stat-label">Alumni Worldwide</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slider-dots" id="slider-dots"></div>
+</section>
+
+<!-- Stats Bar -->
+<div class="stats-bar">
+  <div class="stats-bar-item"><div class="num">120+</div><div class="lbl">Programs</div></div>
+  <div class="stats-bar-item"><div class="num">15,000+</div><div class="lbl">Students</div></div>
+  <div class="stats-bar-item"><div class="num">6</div><div class="lbl">Campuses</div></div>
+  <div class="stats-bar-item"><div class="num">80K+</div><div class="lbl">Alumni</div></div>
+  <div class="stats-bar-item"><div class="num">200+</div><div class="lbl">Research Projects</div></div>
+  <div class="stats-bar-item"><div class="num">50+</div><div class="lbl">Global Partners</div></div>
+</div>
+
+<!-- Alamein Branch -->
+<div class="branch-header" id="about">
+  <div class="branch-header-inner">
+    <div class="branch-eyebrow">AASTMT Campus</div>
+    <h2 class="branch-title"><span>Alamein</span> Branch</h2>
+    <p class="branch-tagline">Colleges &amp; Academic Programs &mdash; New Alamein City, Egypt</p>
+    <div class="branch-meta">
+      <div class="branch-meta-item"><div class="branch-meta-num">8</div><div class="branch-meta-lbl">Colleges</div></div>
+      <div class="branch-meta-item"><div class="branch-meta-num">60+</div><div class="branch-meta-lbl">Programs</div></div>
+      <div class="branch-meta-item"><div class="branch-meta-num">5K+</div><div class="branch-meta-lbl">Students</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Colleges — FIXED: all 8 cards wrapped in <a>, uniform grid -->
+<section class="programs" id="colleges">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-label">Academic Excellence</div>
+      <h2 class="section-title">Explore Our Colleges &amp; Programs</h2>
+      <p class="section-desc">Discover undergraduate and postgraduate programs designed to meet the demands of global academia and industry.</p>
+    </div>
+    <div class="programs-grid">
+
+      <!-- 1. Engineering -->
+      <a href="/colleges/engineering">
+        <div class="program-card c-eng">
+          <div class="program-icon-header">
+            <span class="college-tag">Engineering</span>
+            <svg width="82" height="82" viewBox="0 0 82 82" fill="none">
+              <circle cx="41" cy="41" r="15" stroke="rgba(255,255,255,0.8)" stroke-width="2.2"/>
+              <circle cx="41" cy="41" r="6.5" stroke="#c9a84c" stroke-width="2"/>
+              <rect x="39" y="18" width="4" height="8" rx="2" fill="rgba(255,255,255,0.7)"/>
+              <rect x="39" y="56" width="4" height="8" rx="2" fill="rgba(255,255,255,0.7)"/>
+              <rect x="18" y="39" width="8" height="4" rx="2" fill="rgba(255,255,255,0.7)"/>
+              <rect x="56" y="39" width="8" height="4" rx="2" fill="rgba(255,255,255,0.7)"/>
+              <rect x="24" y="24" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.5)" transform="rotate(45 26.5 26.5)"/>
+              <rect x="53" y="24" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.5)" transform="rotate(45 55.5 26.5)"/>
+              <rect x="24" y="53" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.5)" transform="rotate(45 26.5 55.5)"/>
+              <rect x="53" y="53" width="5" height="5" rx="1.5" fill="rgba(255,255,255,0.5)" transform="rotate(45 55.5 55.5)"/>
+              <line x1="12" y1="20" x2="20" y2="20" stroke="rgba(201,168,76,0.5)" stroke-width="1.2"/>
+              <line x1="20" y1="20" x2="20" y2="30" stroke="rgba(201,168,76,0.5)" stroke-width="1.2"/>
+              <circle cx="12" cy="20" r="2.2" fill="#c9a84c"/>
+              <line x1="62" y1="62" x2="70" y2="62" stroke="rgba(201,168,76,0.5)" stroke-width="1.2"/>
+              <line x1="62" y1="52" x2="62" y2="62" stroke="rgba(201,168,76,0.5)" stroke-width="1.2"/>
+              <circle cx="70" cy="62" r="2.2" fill="#c9a84c"/>
+            </svg>
+          </div>
+          <div class="program-body">
+            <h3>College of Engineering &amp; Technology</h3>
+            <p>Mechanical, Electrical, Civil, Computer and Industrial Engineering with state-of-the-art research laboratories.</p>
+            <span class="program-link">View Programs &#8594;</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 2. AI — links to /portal -->
+      <a href="/portal">
+        <div class="program-card c-ai ai-college">
+          <div class="program-icon-header">
+            <span class="college-tag">Artificial Intelligence</span>
+            <svg width="82" height="82" viewBox="0 0 82 82" fill="none">
+              <ellipse cx="41" cy="39" rx="21" ry="19" stroke="rgba(255,255,255,0.75)" stroke-width="2"/>
+              <line x1="41" y1="20" x2="41" y2="58" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="2 2"/>
+              <circle cx="31" cy="31" r="3.2" fill="#c9a84c"/>
+              <circle cx="51" cy="31" r="3.2" fill="#c9a84c"/>
+              <circle cx="27" cy="43" r="3" fill="rgba(255,255,255,0.55)"/>
+              <circle cx="55" cy="43" r="3" fill="rgba(255,255,255,0.55)"/>
+              <circle cx="35" cy="51" r="3" fill="rgba(255,255,255,0.55)"/>
+              <circle cx="47" cy="51" r="3" fill="rgba(255,255,255,0.55)"/>
+              <line x1="31" y1="31" x2="51" y2="31" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+              <line x1="31" y1="31" x2="27" y2="43" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+              <line x1="51" y1="31" x2="55" y2="43" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+              <line x1="27" y1="43" x2="35" y2="51" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+              <line x1="55" y1="43" x2="47" y2="51" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+              <line x1="27" y1="43" x2="47" y2="51" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+              <line x1="55" y1="43" x2="35" y2="51" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+              <line x1="41" y1="58" x2="41" y2="66" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="34" y1="66" x2="48" y2="66" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="program-body">
+            <h3>College of Artificial Intelligence</h3>
+            <p>Machine Learning, Deep Learning, Data Science, Computer Vision and NLP — shaping the frontier of intelligent systems.</p>
+          </div>
+        </div>
+      </a>
+
+      <!-- 3. Management -->
+      <a href="/colleges/management">
+        <div class="program-card c-mgmt">
+          <div class="program-icon-header">
+            <span class="college-tag">Management &amp; Technology</span>
+            <svg width="82" height="82" viewBox="0 0 82 82" fill="none">
+              <rect x="20" y="33" width="42" height="31" rx="1.5" stroke="rgba(255,255,255,0.75)" stroke-width="2"/>
+              <polyline points="16,33 41,16 66,33" stroke="rgba(255,255,255,0.75)" stroke-width="2" stroke-linejoin="round"/>
+              <line x1="29" y1="33" x2="29" y2="64" stroke="rgba(255,255,255,0.45)" stroke-width="1.8"/>
+              <line x1="37" y1="33" x2="37" y2="64" stroke="rgba(255,255,255,0.45)" stroke-width="1.8"/>
+              <line x1="45" y1="33" x2="45" y2="64" stroke="rgba(255,255,255,0.45)" stroke-width="1.8"/>
+              <line x1="53" y1="33" x2="53" y2="64" stroke="rgba(255,255,255,0.45)" stroke-width="1.8"/>
+              <line x1="16" y1="64" x2="66" y2="64" stroke="#c9a84c" stroke-width="2.5"/>
+              <circle cx="41" cy="25" r="4.5" fill="#c9a84c" opacity="0.85"/>
+            </svg>
+          </div>
+          <div class="program-body">
+            <h3>College of Management &amp; Technology</h3>
+            <p>MBA, Business Administration, Finance, and Logistics Management grounded in rigorous academic methodology.</p>
+            <span class="program-link">View Programs &#8594;</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 4. Pharmacy -->
+      <a href="/colleges/pharmacy">
+        <div class="program-card c-phrm">
+          <div class="program-icon-header">
+            <span class="college-tag">Pharmacy</span>
+            <svg width="82" height="82" viewBox="0 0 82 82" fill="none">
+              <path d="M24 51 Q24 64 41 64 Q58 64 58 51 L54 43 H28 Z" stroke="rgba(255,255,255,0.75)" stroke-width="2" fill="none"/>
+              <ellipse cx="41" cy="43" rx="14.5" ry="4.5" stroke="rgba(255,255,255,0.65)" stroke-width="2" fill="none"/>
+              <line x1="52" y1="27" x2="41" y2="47" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+              <ellipse cx="54" cy="25" rx="4.5" ry="3" fill="#c9a84c" opacity="0.85" transform="rotate(-30 54 25)"/>
+              <text x="34" y="58" font-family="Georgia, serif" font-size="11" fill="rgba(255,255,255,0.55)" font-weight="bold">Rx</text>
+              <circle cx="18" cy="24" r="3.5" stroke="rgba(201,168,76,0.55)" stroke-width="1.5" fill="none"/>
+              <circle cx="27" cy="17" r="3.5" stroke="rgba(201,168,76,0.55)" stroke-width="1.5" fill="none"/>
+              <line x1="21.5" y1="22" x2="23.5" y2="19" stroke="rgba(201,168,76,0.45)" stroke-width="1.2"/>
+            </svg>
+          </div>
+          <div class="program-body">
+            <h3>College of Pharmacy</h3>
+            <p>Comprehensive pharmaceutical sciences covering drug development, clinical pharmacy, pharmacology and therapeutic research.</p>
+            <span class="program-link">View Programs &#8594;</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 5. Logistics -->
+      <a href="/colleges/logistics">
+        <div class="program-card c-lgst">
+          <div class="program-icon-header">
+            <span class="college-tag">Logistics</span>
+            <svg width="82" height="82" viewBox="0 0 82 82" fill="none">
+              <path d="M16 47 L20 56 Q41 63 62 56 L66 47 Z" stroke="rgba(255,255,255,0.75)" stroke-width="2" fill="none"/>
+              <line x1="16" y1="47" x2="66" y2="47" stroke="rgba(255,255,255,0.55)" stroke-width="1.5"/>
+              <rect x="22" y="39" width="11" height="8" rx="1" stroke="#c9a84c" stroke-width="1.5" fill="rgba(201,168,76,0.12)"/>
+              <rect x="36" y="34" width="11" height="13" rx="1" stroke="rgba(255,255,255,0.55)" stroke-width="1.5"/>
+              <rect x="50" y="39" width="11" height="8" rx="1" stroke="#c9a84c" stroke-width="1.5" fill="rgba(201,168,76,0.12)"/>
+              <line x1="41" y1="18" x2="41" y2="34" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="30" y1="18" x2="54" y2="18" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="41" y1="13" x2="41" y2="18" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+              <path d="M14 59 Q22 55 30 59 Q38 63 46 59 Q54 55 68 59" stroke="rgba(255,255,255,0.28)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="program-body">
+            <h3>College of Logistics &amp; Supply Chain</h3>
+            <p>Supply chain management, international trade, maritime logistics and operations aligned with global industry standards.</p>
+            <span class="program-link">View Programs &#8594;</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 6. Dentistry -->
+      <a href="/colleges/dentistry">
+        <div class="program-card c-dent">
+          <div class="program-icon-header">
+            <span class="college-tag">Dentistry</span>
+            <svg width="82" height="82" viewBox="0 0 82 82" fill="none">
+              <path d="M29 22 C22 22 18 29 18 36 C18 42 20 48 24 54 C26 58 29 62 33 62 C35 62 37 58 39 52 C39.5 50 40 48 41 48 C42 48 42.5 50 43 52 C45 58 47 62 49 62 C53 62 56 58 58 54 C62 48 64 42 64 36 C64 29 60 22 53 22 C49 22 47 25 45 27 C43 29 41 30 41 30 C41 30 39 29 37 27 C35 25 33 22 29 22 Z" stroke="rgba(255,255,255,0.75)" stroke-width="2" fill="rgba(255,255,255,0.06)"/>
+              <line x1="41" y1="48" x2="41" y2="62" stroke="rgba(255,255,255,0.22)" stroke-width="1" stroke-dasharray="2 2"/>
+              <path d="M30 29 C28 31 27 34 28 38" stroke="rgba(255,255,255,0.38)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="41" y1="34" x2="41" y2="42" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>
+              <line x1="37" y1="38" x2="45" y2="38" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="program-body">
+            <h3>College of Dentistry</h3>
+            <p>Accredited dental programs with advanced clinical training, oral surgery, prosthodontics and modern dental technology.</p>
+            <span class="program-link">View Programs &#8594;</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 7. Medicine -->
+      <a href="/colleges/medicine">
+        <div class="program-card c-med">
+          <div class="program-icon-header">
+            <span class="college-tag">Medicine</span>
+            <svg width="82" height="82" viewBox="0 0 82 82" fill="none">
+              <line x1="41" y1="14" x2="41" y2="68" stroke="rgba(255,255,255,0.65)" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M41 20 C32 16 21 19 19 26 C17 32 26 34 33 29" stroke="rgba(201,168,76,0.75)" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <path d="M41 20 C50 16 61 19 63 26 C65 32 56 34 49 29" stroke="rgba(201,168,76,0.75)" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <path d="M37 29 C30 36 34 43 41 43 C48 43 52 50 46 56 C42 60 37 62 41 66" stroke="rgba(255,255,255,0.7)" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <path d="M45 29 C52 36 48 43 41 43 C34 43 30 50 36 56 C40 60 45 62 41 66" stroke="rgba(255,255,255,0.45)" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <circle cx="41" cy="14" r="4.5" fill="#c9a84c" opacity="0.9"/>
+            </svg>
+          </div>
+          <div class="program-body">
+            <h3>College of Medicine</h3>
+            <p>World-class medical education integrating clinical rotations, evidence-based research and hospital affiliations.</p>
+            <span class="program-link">View Programs &#8594;</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 8. Physical Therapy -->
+      <a href="/colleges/health">
+        <div class="program-card c-pt">
+          <div class="program-icon-header">
+            <span class="college-tag">Health Sciences</span>
+            <svg width="82" height="82" viewBox="0 0 82 82" fill="none">
+              <circle cx="41" cy="18" r="6.5" stroke="rgba(255,255,255,0.8)" stroke-width="2" fill="none"/>
+              <line x1="41" y1="25" x2="41" y2="52" stroke="rgba(255,255,255,0.65)" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M41 31 C37 27 28 24 24 28" stroke="rgba(255,255,255,0.65)" stroke-width="2" stroke-linecap="round" fill="none"/>
+              <path d="M41 31 C45 27 54 24 58 28" stroke="rgba(255,255,255,0.65)" stroke-width="2" stroke-linecap="round" fill="none"/>
+              <line x1="41" y1="52" x2="33" y2="66" stroke="rgba(255,255,255,0.65)" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="41" y1="52" x2="49" y2="66" stroke="rgba(255,255,255,0.65)" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M13 41 L19 41 L23 32 L28 50 L33 37 L35 41 L67 41" stroke="#c9a84c" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="program-body">
+            <h3>College of Physical Therapy</h3>
+            <p>Rehabilitation sciences, sports therapy and physiotherapy programs with extensive clinical practice and biomechanics research.</p>
+            <span class="program-link">View Programs &#8594;</span>
+          </div>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- Highlights -->
+<section class="highlights" id="highlights">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-label">Institutional Highlights</div>
+      <h2 class="section-title">Recognised Excellence, Measurable Impact</h2>
+      <p class="section-desc">AASTMT Alamein is advancing Egypt's academic frontier — ranked, accredited and committed to research-led education.</p>
+    </div>
+    <div class="highlights-grid">
+      <div class="hl-card">
+        <div class="hl-icon"></div>
+        <div class="hl-num" data-target="1" data-suffix="st">1st</div>
+        <div class="hl-label">In Egypt — Impact Rankings</div>
+        <div class="hl-desc">Times Higher Education Impact Rankings 2025 — top Egyptian institution for sustainable development goals.</div>
+        <div class="hl-bar-wrap"><div class="hl-bar" style="--bar-w:100%"></div></div>
+      </div>
+      <div class="hl-card">
+        <div class="hl-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="13" stroke="rgba(201,168,76,0.6)" stroke-width="1.5"/>
+            <line x1="16" y1="3" x2="16" y2="29" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+            <line x1="3" y1="16" x2="29" y2="16" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+            <ellipse cx="16" cy="16" rx="6" ry="13" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+            <circle cx="16" cy="16" r="2.5" fill="#c9a84c"/>
+            <line x1="16" y1="7" x2="20" y2="13" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="hl-num" data-target="8" data-suffix="">8</div>
+        <div class="hl-label">Arab World Rank</div>
+        <div class="hl-desc">Among the top 8 universities in the Arab region, reflecting commitment to regional scholarly leadership.</div>
+        <div class="hl-bar-wrap"><div class="hl-bar" style="--bar-w:88%"></div></div>
+      </div>
+      <div class="hl-card">
+        <div class="hl-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="4" fill="#c9a84c" opacity="0.9"/>
+            <circle cx="6"  cy="8"  r="2.5" stroke="rgba(201,168,76,0.7)" stroke-width="1.5" fill="none"/>
+            <circle cx="26" cy="8"  r="2.5" stroke="rgba(201,168,76,0.7)" stroke-width="1.5" fill="none"/>
+            <circle cx="6"  cy="24" r="2.5" stroke="rgba(201,168,76,0.7)" stroke-width="1.5" fill="none"/>
+            <circle cx="26" cy="24" r="2.5" stroke="rgba(201,168,76,0.7)" stroke-width="1.5" fill="none"/>
+            <line x1="8"  y1="9.5"  x2="13" y2="14" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+            <line x1="24" y1="9.5"  x2="19" y2="14" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+            <line x1="8"  y1="22.5" x2="13" y2="18" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+            <line x1="24" y1="22.5" x2="19" y2="18" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+          </svg>
+        </div>
+        <div class="hl-num" data-target="104" data-suffix="">104</div>
+        <div class="hl-label">Global Rank</div>
+        <div class="hl-desc">Ranked among the top 104 universities worldwide for impact, research output and international collaboration.</div>
+        <div class="hl-bar-wrap"><div class="hl-bar" style="--bar-w:76%"></div></div>
+      </div>
+      <div class="hl-card">
+        <div class="hl-icon"></div>
+        <div class="hl-num" data-target="200" data-suffix="+">200+</div>
+        <div class="hl-label">Active Research Projects</div>
+        <div class="hl-desc">Over 200 ongoing research initiatives across engineering, health sciences, AI and maritime studies annually.</div>
+        <div class="hl-bar-wrap"><div class="hl-bar" style="--bar-w:82%"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Brand Strip -->
+<div class="brand-strip">
+  <div class="brand-strip-inner">
+    <img src="/aast-assets/20240416124350_file_AAF.png" alt="AASTMT Arabic Identity">
+    <img src="/aast-assets/logo.png" alt="AASTMT Wordmark">
+    <div class="brand-note">"Committed to the advancement of knowledge, the cultivation of critical inquiry, and the formation of principled scholars since 1972."</div>
+  </div>
+</div>
+
+<!-- Campus Overview -->
+<section id="campus">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-label">Campus &amp; Identity</div>
+      <h2 class="section-title">A Legacy of Scholarly Excellence</h2>
+      <p class="section-desc">AASTMT Alamein integrates rigorous academic programmes with a distinguished institutional identity rooted in over five decades of regional leadership.</p>
+    </div>
+    <div class="about-grid">
+      <div class="about-card reveal-left" style="height:380px;"><img src="/aast-assets/aastmt_banner.jpg" alt="AASTMT Campus"></div>
+      <div class="info-card reveal-right">
+        <div class="section-label" style="margin-bottom:8px;">Core Pillars</div>
+        <h3 class="section-title" style="font-size:30px; margin-bottom:12px;">Research · Innovation · Service</h3>
+        <p>Grounded in interdisciplinary scholarship, AASTMT Alamein fosters an environment of intellectual rigour, applied research, and civic responsibility — preparing graduates to contribute meaningfully to Egypt and the world.</p>
+        <p>The campus brings together eight specialised colleges under a unified vision: to produce graduates of academic distinction and professional integrity.</p>
+        <div class="feature-list">
+          <div class="feature-item">✓ Accredited Programs</div>
+          <div class="feature-item">✓ Research Centres</div>
+          <div class="feature-item">✓ Global Partnerships</div>
+          <div class="feature-item">✓ Maritime Heritage</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Ranking Section -->
+<section class="programs" style="background:var(--light-gray);">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-label">Global Standing</div>
+      <h2 class="section-title">Times Higher Education · Impact Rankings 2025</h2>
+      <p class="section-desc">AASTMT's commitment to sustainability and scholarly impact is reflected in its leading global position.</p>
+    </div>
+    <div class="highlight-grid">
+      <div class="rank-card reveal-left">
+        <div class="news-img" style="height:400px;"><img src="/aast-assets/sdg-2025.jpg" alt="THE Impact Rankings 2025"></div>
+        <div class="news-body">
+          <span class="news-tag">Impact Rankings</span>
+          <h3>AASTMT: Egypt's Top University for Sustainable Development</h3>
+          <p>Recognised by Times Higher Education for outstanding performance across the United Nations Sustainable Development Goals, AASTMT leads Egypt and ranks among the world's most impactful universities.</p>
+        </div>
+      </div>
+      <div class="rank-mini reveal-right">
+        <div class="rank-stat"><strong>1st</strong><span>In Egypt — Times Higher Education Impact Rankings 2025, a reflection of sustained institutional excellence.</span></div>
+        <div class="rank-stat"><strong>#8</strong><span>In the Arab World — recognised for research quality, community engagement and academic innovation.</span></div>
+        <div class="rank-stat"><strong>#104</strong><span>Globally — affirming AASTMT's standing as a world-class institution committed to impactful scholarship.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Campus Gallery -->
+<section>
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-label">Campus Life</div>
+      <h2 class="section-title">Moments of Achievement &amp; Discovery</h2>
+      <p class="section-desc">A vibrant academic community built on collaboration, innovation and a shared pursuit of knowledge.</p>
+    </div>
+    <div class="visual-grid">
+      <div class="visual-card reveal-scale">
+        <img src="/aast-assets/graduation.webp" alt="Graduation">
+        <div class="overlay"><h3>Graduation Ceremonies</h3><p>Celebrating academic achievement and the beginning of professional journeys.</p></div>
+      </div>
+      <div class="visual-card reveal-scale">
+        <img src="/aast-assets/graduation-students.webp" alt="Students">
+        <div class="overlay"><h3>Academic Community</h3><p>A diverse community of scholars united by intellectual ambition and purpose.</p></div>
+      </div>
+      <div class="visual-card reveal-scale">
+        <img src="/aast-assets/acpc2024.webp" alt="ACPC 2024">
+        <div class="overlay"><h3>Innovation &amp; Competition</h3><p>Students competing at the highest levels of regional and international academic contests.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- News -->
+<section style="background:var(--white);" id="news">
+  <div class="container">
+    <div class="section-head" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:20px; margin-bottom:42px;">
+      <div>
+        <div class="section-label">Stay Updated</div>
+        <h2 class="section-title" style="margin-bottom:0">Latest News &amp; Events</h2>
+      </div>
+    </div>
+    <div class="news-grid">
+      <div class="news-card featured">
+        <div class="news-img"><img src="/aast-assets/news_image.jpg" alt="News"></div>
+        <div class="news-body">
+          <span class="news-tag">University News</span>
+          <h3>AASTMT Ranks Among Top 5 Egyptian Universities in QS Rankings 2025</h3>
+          <p>The Academy continues its ascent in global university rankings, reflecting commitment to research excellence and international partnerships.</p>
+          <div class="news-date">📅 March 1, 2025</div>
+        </div>
+      </div>
+      <div class="news-card">
+        <div class="news-img"><img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80" alt="Event"></div>
+        <div class="news-body">
+          <span class="news-tag">Events</span>
+          <h3>Annual Engineering Innovation Fair Opens Registration</h3>
+          <p>Students and startups are invited to showcase cutting-edge projects.</p>
+          <div class="news-date">📅 February 20, 2025</div>
+        </div>
+      </div>
+      <div class="news-card">
+        <div class="news-img"><img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&q=80" alt="Research"></div>
+        <div class="news-body">
+          <span class="news-tag">Research</span>
+          <h3>New Research Partnership Signed with European Maritime Institute</h3>
+          <p>A landmark agreement opens doors for joint research in sustainable shipping.</p>
+          <div class="news-date">📅 February 10, 2025</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Band -->
+<div class="cta-band">
+  <h2>Ready to Begin Your Academic Journey?</h2>
+  <p>Join thousands of scholars advancing knowledge at AASTMT Alamein Branch. Applications are open for the Fall 2025 semester.</p>
+</div>
+
+<!-- Footer -->
+<footer id="contact">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="logo">
+        <div class="logo-icon" style="width:46px;height:46px;"><img src="/aast-assets/aast_logo.png" alt="AAST Logo" style="width:100%;height:auto;"></div>
+        <div class="logo-text">
+          <strong style="color:white;font-size:16px;">AASTMT</strong>
+          <span style="color:rgba(255,255,255,0.48);">Arab Academy for Science &amp; Technology</span>
+        </div>
+      </div>
+      <p>A leading regional university dedicated to excellence in science, technology, and maritime education since 1972.</p>
+      <div class="footer-socials">
+        <a href="#">𝕏</a><a href="#">f</a><a href="#">in</a><a href="#">▶</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Academics</h4>
+      <ul>
+        <li><a href="#">Undergraduate</a></li><li><a href="#">Postgraduate</a></li>
+        <li><a href="#">Diplomas</a></li><li><a href="#">Research Programs</a></li>
+        <li><a href="#">E-Learning</a></li><li><a href="#">Academic Calendar</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Admissions</h4>
+      <ul>
+        <li><a href="#">How to Apply</a></li><li><a href="#">Tuition &amp; Fees</a></li>
+        <li><a href="#">Scholarships</a></li><li><a href="#">International Students</a></li>
+        <li><a href="#">Transfer Students</a></li><li><a href="#">FAQs</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="#">Alexandria HQ</a></li><li><a href="#">Cairo Campus</a></li>
+        <li><a href="#">Port Said Campus</a></li><li><a href="#">Alamein Branch</a></li>
+        <li><a href="#">+20 3 5622395</a></li><li><a href="mailto:info@aast.edu">info@aast.edu</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2025 Arab Academy for Science, Technology &amp; Maritime Transport. All rights reserved.</span>
+    <div>
+      <a href="#" style="color:rgba(255,255,255,0.38);text-decoration:none;margin-left:20px;font-size:12px;">Privacy Policy</a>
+      <a href="#" style="color:rgba(255,255,255,0.38);text-decoration:none;margin-left:20px;font-size:12px;">Terms of Use</a>
+      <a href="#" style="color:rgba(255,255,255,0.38);text-decoration:none;margin-left:20px;font-size:12px;">Sitemap</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ── HERO SLIDER ── */
+const slides = document.querySelectorAll('.slide');
+const dotsC  = document.getElementById('slider-dots');
+let cur = 0;
+slides.forEach((_,i)=>{ const d=document.createElement('button'); d.className='slider-dot'+(i===0?' active':''); d.onclick=()=>go(i); dotsC.appendChild(d); });
+function go(n){ slides[cur].classList.remove('active'); dotsC.children[cur].classList.remove('active'); cur=(n+slides.length)%slides.length; slides[cur].classList.add('active'); dotsC.children[cur].classList.add('active'); }
+setInterval(()=>go(cur+1),5000);
+
+/* ── TYPING — college names ── */
+const tEl = document.getElementById('typing-text');
+const phrases = [
+  'Engineering & Technology',
+  'Artificial Intelligence',
+  'Medicine & Health Sciences',
+  'Pharmacy & Clinical Sciences',
+  'Management & Technology',
+  'Logistics & Supply Chain',
+  'Dentistry',
+  'Physical Therapy'
+];
+let pi=0, ci=0, del=false;
+function type(){
+  const c=phrases[pi];
+  if(!del){ tEl.textContent=c.slice(0,++ci); if(ci===c.length){del=true; setTimeout(type,2200); return;} }
+  else{ tEl.textContent=c.slice(0,--ci); if(ci===0){del=false; pi=(pi+1)%phrases.length;} }
+  setTimeout(type, del?55:85);
+}
+setTimeout(type,900);
+
+/* ── PARTICLES ── */
+const canvas=document.getElementById('particles-canvas');
+const ctx=canvas.getContext('2d');
+function resize(){ canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight; }
+resize(); window.addEventListener('resize',resize);
+class P{
+  constructor(){this.r();}
+  r(){this.x=Math.random()*canvas.width;this.y=Math.random()*canvas.height;this.s=Math.random()*2+0.4;this.vx=(Math.random()-.5)*.38;this.vy=(Math.random()-.5)*.38;this.o=Math.random()*.45+.08;}
+  u(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>canvas.width||this.y<0||this.y>canvas.height)this.r();}
+  d(){ctx.beginPath();ctx.arc(this.x,this.y,this.s,0,Math.PI*2);ctx.fillStyle=`rgba(201,168,76,${this.o})`;ctx.fill();}
+}
+const ps=[]; for(let i=0;i<90;i++) ps.push(new P());
+function conn(){
+  for(let i=0;i<ps.length;i++) for(let j=i+1;j<ps.length;j++){
+    const dx=ps[i].x-ps[j].x, dy=ps[i].y-ps[j].y, dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<115){ctx.beginPath();ctx.moveTo(ps[i].x,ps[i].y);ctx.lineTo(ps[j].x,ps[j].y);ctx.strokeStyle=`rgba(201,168,76,${.12*(1-dist/115)})`;ctx.lineWidth=.5;ctx.stroke();}
+  }
+}
+(function anim(){ ctx.clearRect(0,0,canvas.width,canvas.height); ps.forEach(p=>{p.u();p.d();}); conn(); requestAnimationFrame(anim); })();
+
+/* ── SCROLL REVEAL ── */
+document.querySelectorAll('.program-card').forEach((el,i)=>{ el.classList.add('reveal-scale'); el.style.transitionDelay=(i*.07)+'s'; });
+document.querySelectorAll('.news-card').forEach((el,i)=>{ el.classList.add('reveal'); el.style.transitionDelay=(i*.11)+'s'; });
+document.querySelectorAll('.stats-bar-item').forEach((el,i)=>{ el.classList.add('reveal'); el.style.transitionDelay=(i*.09)+'s'; });
+document.querySelectorAll('.section-head').forEach(el=>el.classList.add('reveal'));
+document.querySelectorAll('.cta-band h2,.cta-band p').forEach((el,i)=>{ el.classList.add('reveal'); el.style.transitionDelay=(i*.14)+'s'; });
+document.querySelectorAll('.hl-card').forEach((el,i)=>{ el.classList.add('reveal-scale'); el.style.transitionDelay=(i*.1)+'s'; });
+document.querySelectorAll('.branch-meta-item').forEach((el,i)=>{ el.classList.add('reveal'); el.style.transitionDelay=(i*.1)+'s'; });
+document.querySelectorAll('.branch-title,.branch-eyebrow,.branch-tagline').forEach((el,i)=>{ el.classList.add('reveal'); el.style.transitionDelay=(i*.08)+'s'; });
+document.querySelectorAll('.rank-stat').forEach((el,i)=>{ el.classList.add('reveal-right'); el.style.transitionDelay=(i*.15)+'s'; });
+document.querySelectorAll('.feature-item').forEach((el,i)=>{ el.classList.add('reveal'); el.style.transitionDelay=(i*.1)+'s'; });
+document.querySelectorAll('.visual-card').forEach((el,i)=>{ el.classList.add('reveal-scale'); el.style.transitionDelay=(i*.12)+'s'; });
+
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      if(e.target.classList.contains('hl-card')) e.target.classList.add('in-view');
+    } else {
+      e.target.classList.remove('visible');
+      if(e.target.classList.contains('hl-card')) e.target.classList.remove('in-view');
+    }
+  });
+},{threshold:0.12, rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reveal-scale,.hl-card').forEach(el=>obs.observe(el));
+
+/* ── COUNTER ── */
+function animCount(el,target,suf){
+  let c=0; const step=Math.ceil(target/60);
+  const t=setInterval(()=>{ c=Math.min(c+step,target); el.textContent=c+suf; if(c>=target)clearInterval(t); },22);
+}
+const sObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.num').forEach(el=>{ const tx=el.textContent, n=parseInt(tx), s=tx.replace(String(n),''); animCount(el,n,s); });
+      sObs.unobserve(e.target);
+    }
+  });
+},{threshold:0.5});
+document.querySelectorAll('.stats-bar').forEach(el=>sObs.observe(el));
+
+/* ── HIGHLIGHT COUNTER ── */
+const hlObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const numEl=e.target.querySelector('.hl-num');
+      if(numEl){
+        const orig=numEl.dataset.orig || numEl.textContent;
+        numEl.dataset.orig=orig;
+        const n=parseInt(orig);
+        const suf=orig.replace(/\d+/,'');
+        let c=0; const step=Math.ceil(n/50);
+        const ti=setInterval(()=>{ c=Math.min(c+step,n); numEl.textContent=c+suf; if(c>=n)clearInterval(ti); },30);
+      }
+    } else {
+      const numEl=e.target.querySelector('.hl-num');
+      if(numEl && numEl.dataset.orig) numEl.textContent=numEl.dataset.orig;
+    }
+  });
+},{threshold:0.35});
+document.querySelectorAll('.hl-card').forEach(el=>hlObs.observe(el));
+</script>
+</body>
+</html>

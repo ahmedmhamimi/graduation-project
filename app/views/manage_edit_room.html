@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo"><img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo"></div>
+            <div class="ms-3"><span class="navbar-brand-text mb-0">{{ role_title }}</span></div>
+        </div>
+        <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+    </div>
+</nav>
+{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:600px;">
+    <a href="/dashboard/{{ user.role_id }}" class="text-primary-academic fw-bold mb-3 d-inline-block">← Back to Dashboard</a>
+    <h2 class="text-primary-academic fw-bold mb-4">Edit Room</h2>
+    <p class="text-secondary-academic">{{ room.building_abbr }} {{ room.room_number }} — {{ room.building_name }}</p>
+    <div class="card-academic">
+        <form action="/manage/room/edit/{{ room.id }}" method="POST">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label-academic">Room</label>
+                    <input type="text" value="{{ room.building_abbr }} {{ room.room_number }}" disabled class="form-control-academic" style="background:#f8f9fa;">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-academic">Capacity *</label>
+                    <input type="number" name="capacity" required value="{{ room.capacity }}" min="1" class="form-control-academic">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-academic">Exam Capacity *</label>
+                    <input type="number" name="exam_capacity" required value="{{ room.exam_capacity }}" min="1" class="form-control-academic">
+                </div>
+                <div class="col-12 text-end mt-3">
+                    <a href="/dashboard/{{ user.role_id }}" class="btn btn-secondary-academic me-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary-academic">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1097 @@
+{% extends "base.html" %}
+
+{% block back_button %}{% endblock %}
+
+{% block content %}
+
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo">
+                <img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo">
+            </div>
+            <div class="ms-3">
+                <span class="navbar-brand-text mb-0">{{ user.name if user else "Administrator" }}</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <a href="#" class="back-btn" onclick="event.preventDefault(); fetch('/logout').then(() => window.location.href = '/portal');">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back
+            </a>
+            {% if not show_analysis %}
+            <a href="/admin/analysis" class="btn btn-outline-academic btn-sm">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right:4px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                Analyze Schedule
+            </a>
+            {% endif %}
+            <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid px-4 py-4">
+
+    {% if flash_success %}
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2" style="vertical-align:text-bottom;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ flash_success }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% if flash_error %}
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2" style="vertical-align:text-bottom;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        {{ flash_error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    <!-- Header Card -->
+    <div class="card-academic mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <h5 class="text-primary-academic fw-bold mb-1">{{ title }}</h5>
+                <p class="text-secondary-academic mb-0" style="font-size:0.875rem;">
+                    {% if show_analysis %}
+                    Multi-Agent Schedule Analysis System
+                    {% else %}
+                    {{ permissions.description if permissions else "" }}
+                    {% endif %}
+                </p>
+            </div>
+            {% if show_analysis and analysis_report %}
+            <div class="col-md-6 text-end">
+                <span class="badge bg-{{ analysis_report.status_class }}" style="font-size:0.9rem;padding:8px 16px;">
+                    {% if analysis_report.is_healthy %}
+                    OK {{ analysis_report.status_label }}
+                    {% else %}
+                    ! {{ analysis_report.status_label }}
+                    {% endif %}
+                </span>
+                <form action="/admin/analysis/refresh" method="POST" class="d-inline ms-2">
+                    <button type="submit" class="btn btn-outline-academic btn-sm">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right:2px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Re-analyze
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if show_analysis and analysis_error %}
+    <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div><strong>Analysis Error:</strong> {{ analysis_error }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Stats Grid -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Instructors</div>
+                <div class="stat-value">{{ stats.total_instructors }}</div>
+                <div class="stat-subtext">{{ stats.instructors_assigned }} assigned</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Courses</div>
+                <div class="stat-value">{{ stats.total_courses }}</div>
+                <div class="stat-subtext">Active</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Classes</div>
+                <div class="stat-value">{{ stats.total_classes }}</div>
+                <div class="stat-subtext">Scheduled</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Rooms</div>
+                <div class="stat-value">{{ stats.total_rooms }}</div>
+                <div class="stat-subtext">{{ stats.rooms_in_use }} in use</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Students</div>
+                <div class="stat-value">{{ stats.total_students }}</div>
+                <div class="stat-subtext">Enrolled</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Seat Capacity</div>
+                <div class="stat-value">{{ stats.total_room_capacity }}</div>
+                <div class="stat-subtext">Total</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="card-academic">
+
+        {% if show_analysis and analysis_report %}
+
+        {# ── ANALYSIS PANEL ── #}
+        <div class="row g-3 p-3 pb-0">
+            <div class="col-md-3">
+                <div class="card border-0 bg-light">
+                    <div class="card-body text-center py-3">
+                        <div class="text-secondary small mb-1">Agent 1: Constraints</div>
+                        <div class="fs-4 fw-bold {% if analysis_report.constraint_report.is_clean %}text-success{% else %}text-warning{% endif %}">
+                            {{ analysis_report.constraint_report.warning_count }}
+                        </div>
+                        <div class="small text-muted">warnings</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-light">
+                    <div class="card-body text-center py-3">
+                        <div class="text-secondary small mb-1">Agent 2: Validation</div>
+                        <div class="fs-4 fw-bold {% if analysis_report.validation_report.is_feasible %}text-success{% else %}text-danger{% endif %}">
+                            {{ analysis_report.validation_report.hard_count }}
+                        </div>
+                        <div class="small text-muted">hard violations</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-light">
+                    <div class="card-body text-center py-3">
+                        <div class="text-secondary small mb-1">Agent 3: Classification</div>
+                        <div class="fs-4 fw-bold text-primary">
+                            {{ analysis_report.classification_report.critical_count }}
+                        </div>
+                        <div class="small text-muted">critical issues</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-light">
+                    <div class="card-body text-center py-3">
+                        <div class="text-secondary small mb-1">Agent 4: Suggestions</div>
+                        <div class="fs-4 fw-bold text-info">
+                            {{ analysis_report.suggestion_report.total_suggestions }}
+                        </div>
+                        <div class="small text-muted">recommendations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs-academic mt-3" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-agent-constraints" type="button" role="tab">
+                    <span class="badge bg-secondary me-1">1</span> Constraint Validation
+                    {% if analysis_report.constraint_report.warning_count > 0 %}
+                    <span class="badge bg-warning text-dark ms-1">{{ analysis_report.constraint_report.warning_count }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-agent-validation" type="button" role="tab">
+                    <span class="badge bg-secondary me-1">2</span> Timetable Validation
+                    {% if analysis_report.validation_report.hard_count > 0 %}
+                    <span class="badge bg-danger ms-1">{{ analysis_report.validation_report.hard_count }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-agent-classification" type="button" role="tab">
+                    <span class="badge bg-secondary me-1">3</span> Violation Classification
+                    {% if analysis_report.classification_report.total_count > 0 %}
+                    <span class="badge bg-info ms-1">{{ analysis_report.classification_report.total_count }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-agent-suggestions" type="button" role="tab">
+                    <span class="badge bg-secondary me-1">4</span> Correction Suggestions
+                    {% if analysis_report.suggestion_report.total_suggestions > 0 %}
+                    <span class="badge bg-success ms-1">{{ analysis_report.suggestion_report.total_suggestions }}</span>
+                    {% endif %}
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content p-4">
+            <div class="tab-pane fade show active" id="tab-agent-constraints" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-1">Pre-Solve Structural Checks</h6>
+                        <p class="text-muted small mb-0">
+                            Analyzed {{ analysis_report.constraint_report.total_courses }} courses,
+                            {{ analysis_report.constraint_report.total_rooms }} rooms,
+                            {{ analysis_report.constraint_report.total_instructors }} instructors,
+                            {{ analysis_report.constraint_report.total_classes }} classes.
+                        </p>
+                    </div>
+                    <div>
+                        {% if analysis_report.constraint_report.is_clean %}
+                        <span class="badge bg-success" style="font-size:0.85rem;padding:6px 12px;">All Checks Passed</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark" style="font-size:0.85rem;padding:6px 12px;">
+                            {{ analysis_report.constraint_report.warning_count }} Warning(s)
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if analysis_report.constraint_report.is_clean %}
+                <div class="alert alert-success d-flex align-items-center">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2 flex-shrink-0">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div><strong>No structural issues detected.</strong></div>
+                </div>
+                {% else %}
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead><tr><th style="width:120px;">Severity</th><th style="width:160px;">Code</th><th>Message</th><th style="width:100px;">Entity</th></tr></thead>
+                        <tbody>
+                            {% for warning in analysis_report.constraint_report.warnings %}
+                            <tr>
+                                <td><span class="badge bg-{{ warning.severity_class }}">{% if warning.code.startswith('CRIT') %}CRITICAL{% elif warning.code.startswith('ERR') %}ERROR{% else %}WARNING{% endif %}</span></td>
+                                <td><code class="small">{{ warning.code }}</code></td>
+                                <td>{{ warning.message }}{% if warning.entity_name %}<br><small class="text-muted">Entity: <strong>{{ warning.entity_name }}</strong></small>{% endif %}</td>
+                                <td><span class="badge bg-light text-dark">{{ warning.entity_type }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="tab-pane fade" id="tab-agent-validation" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div><h6 class="mb-1">Post-Solve Hard Constraint Checks</h6></div>
+                    <div>
+                        {% if analysis_report.validation_report.is_feasible %}
+                        <span class="badge bg-success" style="font-size:0.85rem;padding:6px 12px;">Feasible Schedule</span>
+                        {% else %}
+                        <span class="badge bg-danger" style="font-size:0.85rem;padding:6px 12px;">{{ analysis_report.validation_report.hard_count }} Hard Violation(s)</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if not analysis_report.validation_report.xml_loaded %}
+                <div class="alert alert-warning"><strong>XML solution not loaded.</strong></div>
+                {% elif analysis_report.validation_report.is_feasible %}
+                <div class="alert alert-success d-flex align-items-center">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div><strong>Schedule is valid!</strong> No constraint violations detected.</div>
+                </div>
+                {% else %}
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead><tr><th style="width:70px;">ID</th><th style="width:90px;">Severity</th><th style="width:160px;">Type</th><th>Description</th><th style="width:220px;">Affected Entities</th></tr></thead>
+                        <tbody>
+                            {% for v in analysis_report.validation_report.violations %}
+                            <tr>
+                                <td><code class="small">{{ v.id }}</code></td>
+                                <td><span class="badge bg-{{ v.severity_class }}">{{ v.severity.value | upper }}</span></td>
+                                <td><span class="badge bg-light text-dark">{{ v.type_label }}</span></td>
+                                <td>{{ v.description }}{% if v.hint %}<br><small class="text-muted fst-italic">{{ v.hint }}</small>{% endif %}</td>
+                                <td>
+                                    {% if v.affected_class_names %}<div><small><strong>Classes:</strong> {{ v.affected_class_names | join(', ') }}</small></div>{% endif %}
+                                    {% if v.affected_room_names %}<div><small><strong>Rooms:</strong> {{ v.affected_room_names | join(', ') }}</small></div>{% endif %}
+                                    {% if v.affected_instructor_names %}<div><small><strong>Instructors:</strong> {{ v.affected_instructor_names | join(', ') }}</small></div>{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="tab-pane fade" id="tab-agent-classification" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div><h6 class="mb-1">Violation Priority Classification</h6></div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-danger">Critical: {{ analysis_report.classification_report.critical_count }}</span>
+                        <span class="badge bg-warning text-dark">High: {{ analysis_report.classification_report.high_count }}</span>
+                        <span class="badge bg-info">Medium: {{ analysis_report.classification_report.medium_count }}</span>
+                        <span class="badge bg-secondary">Low: {{ analysis_report.classification_report.low_count }}</span>
+                    </div>
+                </div>
+                {% if analysis_report.classification_report.total_count == 0 %}
+                <div class="alert alert-success d-flex align-items-center">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div><strong>No violations to classify.</strong></div>
+                </div>
+                {% else %}
+                {% for group, items in analysis_report.classification_report.grouped_by_group.items() %}
+                <div class="card mb-3 border">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                        <strong>{{ group }}</strong><span class="badge bg-secondary">{{ items | length }} issue(s)</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light"><tr><th style="width:100px;">Priority</th><th style="width:80px;">Impact</th><th>Description</th><th style="width:200px;">Suggested Strategy</th></tr></thead>
+                            <tbody>
+                                {% for cv in items %}
+                                <tr>
+                                    <td><span class="badge bg-{{ cv.priority_class }}">{{ cv.priority_label }}</span></td>
+                                    <td><span class="text-muted small">{{ "%.1f" | format(cv.impact_score) }}</span></td>
+                                    <td>{{ cv.violation.description }}<br><small class="text-muted">ID: <code>{{ cv.violation.id }}</code></small></td>
+                                    <td><code class="small">{{ cv.suggested_strategy }}</code></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="tab-pane fade" id="tab-agent-suggestions" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div><h6 class="mb-1">Suggested Corrections</h6></div>
+                    <div>
+                        {% if analysis_report.suggestion_report.total_suggestions > 0 %}
+                        <span class="badge bg-success" style="font-size:0.85rem;padding:6px 12px;">{{ analysis_report.suggestion_report.total_suggestions }} Suggestion(s)</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if analysis_report.suggestion_report.total_suggestions == 0 %}
+                <div class="alert alert-info d-flex align-items-center">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div><strong>No suggestions needed.</strong></div>
+                </div>
+                {% else %}
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead><tr><th style="width:70px;">ID</th><th style="width:140px;">Type</th><th>Suggestion</th></tr></thead>
+                        <tbody>
+                            {% for s in analysis_report.suggestion_report.suggestions %}
+                            <tr>
+                                <td><code class="small">{{ s.id }}</code></td>
+                                <td><span class="badge bg-{{ s.type_class }}">{{ s.type_label }}</span></td>
+                                <td>
+                                    <strong>{{ s.description }}</strong><br>
+                                    <small class="text-muted">{{ s.rationale }}</small>
+                                    {% if s.proposed_time_description %}<br><small class="text-primary">Proposed time: {{ s.proposed_time_description }}</small>{% endif %}
+                                    {% if s.proposed_room_name %}<br><small class="text-primary">Proposed room: {{ s.proposed_room_name }}</small>{% endif %}
+                                    {% if s.proposed_instructor_name %}<br><small class="text-primary">Proposed instructor: {{ s.proposed_instructor_name }}</small>{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% else %}
+
+        {# Visualizations #}
+        {% if user_stats %}
+        <div class="row g-4 mb-4 px-3 pt-3">
+            <div class="col-md-4">
+                <div class="card-academic" style="min-height:280px;">
+                    <h6 class="text-primary-academic fw-bold mb-2">Users by Role</h6>
+                    <div style="height:220px;"><canvas id="chartUsersByRole"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-academic" style="min-height:280px;">
+                    <h6 class="text-primary-academic fw-bold mb-2">Students by Department</h6>
+                    <div style="height:220px;"><canvas id="chartStudentsByDept"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-academic" style="min-height:280px;">
+                    <h6 class="text-primary-academic fw-bold mb-2">Students by Year</h6>
+                    <div style="height:220px;"><canvas id="chartStudentsByYear"></canvas></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <ul class="nav nav-tabs-academic" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview" type="button" role="tab">Overview</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-instructors" type="button" role="tab">Instructors</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-courses" type="button" role="tab">Courses</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rooms" type="button" role="tab">Rooms</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-classes" type="button" role="tab">Classes</button>
+            </li>
+            {% if can_view_students %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-students" type="button" role="tab">Students</button>
+            </li>
+            {% endif %}
+        </ul>
+
+        <div class="tab-content p-4">
+
+            {# ── OVERVIEW TAB ── #}
+            <div class="tab-pane fade show active" id="tab-overview" role="tabpanel">
+
+                <div class="card-academic mb-4">
+                    <div class="card-header-academic">Department Breakdown</div>
+                    <div class="table-responsive">
+                        <table class="table-academic mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Department</th><th>Code</th>
+                                    <th class="text-center">Instructors</th>
+                                    <th class="text-center">Courses</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deptTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {% if stats.room_utilization %}
+                <div class="card-academic mb-4">
+                    <div class="card-header-academic d-flex justify-content-between align-items-center">
+                        <span>Room Utilization (Top 20)</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="small text-muted mb-0">Filter by room:</label>
+                            <select id="roomFilterSelect" class="form-select form-select-sm" style="width:180px;" onchange="filterRoomTimetable(this.value)">
+                                <option value="">— All Rooms —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table-academic mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Room</th>
+                                    <th>Type</th>
+                                    <th class="text-center">Capacity</th>
+                                    <th class="text-center">Classes</th>
+                                    <th>Usage</th>
+                                    <th class="text-center">%</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roomUtilBody">
+                                {% for room in stats.room_utilization %}
+                                <tr data-room-raw="{{ room.room_name }}">
+                                    <td><strong class="room-display-name">{{ room.room_name }}</strong></td>
+                                    <td><span class="badge badge-info room-type-badge">—</span></td>
+                                    <td class="text-center">{{ room.capacity }}</td>
+                                    <td class="text-center">{{ room.class_count }}</td>
+                                    <td style="min-width:120px;">
+                                        {% set pct = [room.class_count * 10, 100] | min %}
+                                        <div class="progress" style="height:8px;border-radius:4px;">
+                                            <div class="progress-bar" data-width="{{ pct }}" data-bg="var(--primary-blue)"></div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center room-pct-cell">{{ pct }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="roomTimetableSection" class="timetable-container mb-4" style="display:none;">
+                    <div class="timetable-header-bar d-flex justify-content-between align-items-center">
+                        <span>Weekly Timetable — Room:
+                            <strong id="roomTimetableTitle"></strong></span>
+                        <button class="btn btn-sm"
+                                style="background:rgba(255,255,255,0.2);color:white;
+                                    border:1px solid rgba(255,255,255,0.4);border-radius:6px;"
+                                onclick="filterRoomTimetable('')">✕ Close</button>
+                    </div>
+                    <div class="p-0 table-responsive">
+                        <table class="timetable-grid" id="roomTimetableGrid" style="min-width:700px;">
+                            <thead>
+                                <tr>
+                                    <th class="time-header">Time</th>
+                                    <th>Saturday</th><th>Sunday</th><th>Monday</th>
+                                    <th>Tuesday</th><th>Wednesday</th><th>Thursday</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roomTimetableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="row g-4 mt-1">
+                    <div class="col-md-6">
+                        <div class="card-academic" style="min-height:300px;">
+                            <h6 class="text-primary-academic mb-0">Course Enrollment Trends</h6>
+                            <div style="height:240px;"><canvas id="enrollmentChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card-academic" style="min-height:300px;">
+                            <h6 class="text-primary-academic mb-0">Weekly Room Occupancy</h6>
+                            <div style="height:240px;"><canvas id="occupancyChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# ── INSTRUCTORS TAB ── #}
+            <div class="tab-pane fade" id="tab-instructors" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead>
+                            <tr><th>Name</th><th>Position</th><th>Department</th><th>Email</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for i in instructors %}
+                            <tr>
+                                <td><strong>{{ i.first_name }} {{ i.middle_name or "" }} {{ i.last_name }}</strong></td>
+                                <td>{{ i.position_label or "-" }}</td>
+                                <td><span class="badge badge-info">{{ i.dept_abbr }}</span> {{ i.department_name }}</td>
+                                <td>{{ i.email or "-" }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not instructors %}
+                            <tr><td colspan="4" class="text-center py-4 text-secondary-academic">No instructors found.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {# ── COURSES TAB ── #}
+            <div class="tab-pane fade" id="tab-courses" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead>
+                            <tr><th>Course</th><th>Title</th><th>Department</th><th class="text-center">Expected</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for c in courses %}
+                            <tr>
+                                <td><strong>{{ c.subject }} {{ c.course_number }}</strong></td>
+                                <td>{{ c.title or "-" }}</td>
+                                <td>{{ c.department_name or "-" }}</td>
+                                <td class="text-center">{{ c.expected_students or 0 }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not courses %}
+                            <tr><td colspan="4" class="text-center py-4 text-secondary-academic">No courses found.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {# ── ROOMS TAB ── #}
+            <div class="tab-pane fade" id="tab-rooms" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead>
+                            <tr><th>Room</th><th>Building</th><th>Type</th><th class="text-center">Capacity</th><th class="text-center">Exam Cap</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for r in rooms %}
+                            <tr data-room-number="{{ r.room_number }}">
+                                <td><strong class="room-display-name">{{ r.building_abbr }} {{ r.room_number }}</strong></td>
+                                <td>{{ r.building_name }}</td>
+                                <td>{{ r.room_type_label or "-" }}</td>
+                                <td class="text-center">{{ r.capacity }}</td>
+                                <td class="text-center">{{ r.exam_capacity }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not rooms %}
+                            <tr><td colspan="5" class="text-center py-4 text-secondary-academic">No rooms found.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {# ── CLASSES TAB ── #}
+            <div class="tab-pane fade" id="tab-classes" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead>
+                            <tr><th>Course</th><th>Section</th><th>Time</th><th>Room</th><th>Instructor(s)</th><th class="text-center">Capacity</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for c in classes %}
+                            <tr>
+                                <td><strong>{{ c.subject }} {{ c.course_number }}</strong><br><small class="text-secondary-academic">{{ c.course_title }}</small></td>
+                                <td>{{ c.class_suffix or "-" }}</td>
+                                <td>{{ c.time_pattern_name or "TBA" }}</td>
+                                <td class="room-display-name">{% if c.assigned_building %}{{ c.assigned_building }} {{ c.assigned_room_number }}{% else %}<span class="text-secondary-academic">TBA</span>{% endif %}</td>
+                                <td>{{ c.instructor_names or "TBA" }}</td>
+                                <td class="text-center">{{ c.expected_capacity or "-" }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not classes %}
+                            <tr><td colspan="6" class="text-center py-4 text-secondary-academic">No classes found.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {# ── STUDENTS TAB ── #}
+            {% if can_view_students %}
+            <div class="tab-pane fade" id="tab-students" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead>
+                            <tr><th>Name</th><th>Email</th><th>External ID</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for s in students %}
+                            <tr>
+                                <td><strong>{{ s.first_name }} {{ s.middle_name or "" }} {{ s.last_name }}</strong></td>
+                                <td>{{ s.email or "-" }}</td>
+                                <td>{{ s.external_id or "-" }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not students %}
+                            <tr><td colspan="3" class="text-center py-4 text-secondary-academic">No students found.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if not show_analysis and user_stats %}
+<script id="chart-data" type="application/json">
+{
+    "by_role": {{ (user_stats.by_role if user_stats and user_stats.by_role else {}) | tojson }},
+    "students_by_department": {{ (user_stats.students_by_department if user_stats and user_stats.students_by_department else {}) | tojson }},
+    "students_by_year": {{ (user_stats.students_by_year if user_stats and user_stats.students_by_year else {}) | tojson }}
+}
+</script>
+{% endif %}
+
+<footer class="footer-academic mt-5">
+    <p>AI Timetable System 2026 | Administrator Panel</p>
+</footer>
+
+{% include "partials/chat_widget.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.progress-bar[data-width]').forEach(function (el) {
+            el.style.width = el.getAttribute('data-width') + '%';
+            var bg = el.getAttribute('data-bg');
+            if (bg) { el.style.background = bg; }
+        });
+
+        applyRoomFilters();
+        buildDeptTable();
+        buildRoomFilterDropdown();
+    });
+</script>
+
+<script>
+/* ── Room type lookup by room number substring ── */
+function getRoomType(roomName) {
+    var n = (roomName || '').replace(/^03-/, '');
+    var mapping = [
+        { keys: ['323','325','327','324'], type: 'Lecture' },
+        { keys: ['322','010','307','222','427'], type: 'Lab' },
+        { keys: ['425'], type: 'Section' },
+    ];
+    for (var m of mapping) {
+        for (var k of m.keys) {
+            if (n.includes(k)) return m.type;
+        }
+    }
+    return '—';
+}
+
+function stripPrefix(name) {
+    return (name || '').replace(/^03\s+/, '').trim();
+}
+
+function applyRoomFilters() {
+    document.querySelectorAll('.room-display-name').forEach(function(el) {
+        el.textContent = stripPrefix(el.textContent.trim());
+    });
+    document.querySelectorAll('#roomUtilBody tr').forEach(function(row) {
+        var raw = row.getAttribute('data-room-raw') || '';
+        var displayName = stripPrefix(raw);
+        var nameCell = row.querySelector('.room-display-name');
+        if (nameCell) nameCell.textContent = displayName;
+        var badge = row.querySelector('.room-type-badge');
+        if (badge) badge.textContent = getRoomType(raw);
+    });
+}
+
+/* ── Department table (base — immediately overridden with student counts below) ── */
+var DEPT_DATA = [
+    { department: 'Data Science',        abbr: 'DS',  instructor_count: 9,  course_count: 7  },
+    { department: 'Intelligent Systems', abbr: 'IS',  instructor_count: 11, course_count: 7  },
+    { department: 'General',             abbr: 'GEN', instructor_count: 10, course_count: 35 },
+];
+function buildDeptTable() {
+    var tbody = document.getElementById('deptTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    DEPT_DATA.forEach(function(d) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td><strong>' + d.department + '</strong></td>' +
+            '<td><span class="badge badge-info">' + d.abbr + '</span></td>' +
+            '<td class="text-center">' + d.instructor_count + '</td>' +
+            '<td class="text-center">' + d.course_count + '</td>';
+        tbody.appendChild(tr);
+    });
+}
+
+function buildRoomFilterDropdown() {
+    var select = document.getElementById('roomFilterSelect');
+    if (!select) return;
+    document.querySelectorAll('#roomUtilBody tr').forEach(function(row) {
+        var raw = row.getAttribute('data-room-raw') || '';
+        var display = stripPrefix(raw);
+        if (!display) return;
+        var opt = document.createElement('option');
+        opt.value = raw;
+        opt.textContent = display;
+        select.appendChild(opt);
+    });
+}
+
+var CLASS_DATA = {{ classes | tojson if classes else '[]' }};
+var DAYS_ORDER  = ['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday'];
+var TIME_LABELS = ['9:00 – 10:40', '11:00 – 12:40', '13:00 – 14:40'];
+var DAY_BITS_MAP = { 64:'Monday', 32:'Tuesday', 16:'Wednesday', 8:'Thursday', 2:'Saturday', 1:'Sunday' };
+
+function parseDays(bits) {
+    var days = [];
+    var b = parseInt(bits) || 0;
+    for (var bit in DAY_BITS_MAP) {
+        if (b & parseInt(bit)) days.push(DAY_BITS_MAP[bit]);
+    }
+    return days;
+}
+
+function slotToLabel(slot) {
+    var s = parseInt(slot);
+    if (s === 108) return '9:00 – 10:40';
+    if (s === 132) return '11:00 – 12:40';
+    if (s === 156) return '13:00 – 14:40';
+    return 'Slot ' + slot;
+}
+
+var _courseColorMap = {};
+var _colorCounter  = 0;
+function getCourseColor(key) {
+    if (_courseColorMap[key] === undefined) {
+        _courseColorMap[key] = _colorCounter % 6;
+        _colorCounter++;
+    }
+    return _courseColorMap[key];
+}
+
+function escHtml(str) {
+    var d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+}
+
+function filterRoomTimetable(rawRoomValue) {
+    var section = document.getElementById('roomTimetableSection');
+    var select  = document.getElementById('roomFilterSelect');
+    if (select) select.value = rawRoomValue;
+
+    if (!rawRoomValue) {
+        if (section) section.style.display = 'none';
+        return;
+    }
+
+    document.getElementById('roomTimetableTitle').textContent = stripPrefix(rawRoomValue);
+
+    var roomClasses = CLASS_DATA.filter(function(c) {
+        var bldg = (c.assigned_building || '').trim();
+        var num  = (c.assigned_room_number || '').trim();
+        var full = (bldg + ' ' + num).trim();
+        var rawVal = rawRoomValue.replace(/^03-/, '');
+        return full.includes(rawVal) || num.includes(rawVal);
+    });
+
+    var grid = {};
+    TIME_LABELS.forEach(function(t) {
+        grid[t] = {};
+        DAYS_ORDER.forEach(function(d) { grid[t][d] = []; });
+    });
+
+    roomClasses.forEach(function(c) {
+        if (c.assigned_days == null || c.assigned_slot == null) return;
+        var days     = parseDays(c.assigned_days);
+        var label    = slotToLabel(c.assigned_slot);
+        if (!grid[label]) return;
+        var courseKey = (c.subject || '') + '_' + (c.course_number || '');
+        var colorIdx = getCourseColor(courseKey);
+        days.forEach(function(day) {
+            if (grid[label][day] !== undefined) {
+                grid[label][day].push({
+                    title:      c.course_title || ((c.subject || '') + ' ' + (c.course_number || '')),
+                    instructor: c.instructor_names || '',
+                    suffix:     c.class_suffix || '',
+                    colorIndex: colorIdx
+                });
+            }
+        });
+    });
+
+    var tbody = document.getElementById('roomTimetableBody');
+    tbody.innerHTML = '';
+
+    TIME_LABELS.forEach(function(timeLabel) {
+        var tr = document.createElement('tr');
+        var tdTime = document.createElement('td');
+        tdTime.className = 'time-cell';
+        tdTime.textContent = timeLabel;
+        tr.appendChild(tdTime);
+
+        DAYS_ORDER.forEach(function(day) {
+            var td = document.createElement('td');
+            td.className = 'timetable-td';
+            var cells = grid[timeLabel][day];
+            if (cells && cells.length > 0) {
+                td.innerHTML = cells.map(function(c) {
+                    return '<div class="course-card course-color-' + c.colorIndex + '">' +
+                               '<div class="course-name">' + escHtml(c.title) + '</div>' +
+                               '<div class="course-details">' +
+                                   (c.instructor ? escHtml(c.instructor) : '') +
+                                   (c.suffix ? ' &middot; Sec ' + escHtml(c.suffix) : '') +
+                               '</div>' +
+                           '</div>';
+                }).join('');
+            } else {
+                td.innerHTML = '<span class="text-muted" style="font-size:0.8rem;">—</span>';
+            }
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+
+    section.style.display = '';
+    section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+
+{% if not show_analysis %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var dataEl = document.getElementById('chart-data');
+        if (!dataEl) return;
+        var chartData;
+        try { chartData = JSON.parse(dataEl.textContent); } catch (e) { return; }
+
+        var roleColors = ['#0284c7', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899'];
+
+        var byRole = chartData.by_role || {};
+        var roleLabels = Object.keys(byRole);
+        var roleValues = Object.values(byRole);
+        var ctx1 = document.getElementById('chartUsersByRole');
+        if (ctx1 && roleLabels.length > 0) {
+            new Chart(ctx1, { type: 'doughnut', data: { labels: roleLabels.map(function(l){ return l.charAt(0).toUpperCase()+l.slice(1); }), datasets: [{ data: roleValues, backgroundColor: roleColors.slice(0, roleLabels.length), borderWidth: 2, borderColor: '#ffffff' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } } } } });
+        }
+
+        var byDept = chartData.students_by_department || {};
+        var deptLabels = Object.keys(byDept);
+        var deptValues = Object.values(byDept);
+        var ctx2 = document.getElementById('chartStudentsByDept');
+        if (ctx2 && deptLabels.length > 0) {
+            new Chart(ctx2, { type: 'bar', data: { labels: deptLabels, datasets: [{ label: 'Students', data: deptValues, backgroundColor: '#0284c7', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { font: { size: 10 } } } }, plugins: { legend: { display: false } } } });
+        }
+
+        var byYear = chartData.students_by_year || {};
+        var yearLabels = Object.keys(byYear);
+        var yearValues = Object.values(byYear);
+        var ctx3 = document.getElementById('chartStudentsByYear');
+        if (ctx3 && yearLabels.length > 0) {
+            new Chart(ctx3, { type: 'bar', data: { labels: yearLabels, datasets: [{ label: 'Students', data: yearValues, backgroundColor: roleColors.slice(0, yearLabels.length), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { font: { size: 10 } } } }, plugins: { legend: { display: false } } } });
+        }
+
+        var ctx4 = document.getElementById('enrollmentChart');
+        if (ctx4) {
+            new Chart(ctx4, { type: 'line', data: { labels: ['W1','W2','W3','W4','W5','W6'], datasets: [ { label: 'Students', data: [820,870,910,890,930,950], tension: 0.35, pointRadius: 4, fill: false, borderColor: '#1a4d7a', borderWidth: 2 }, { label: 'Courses', data: [70,75,80,78,82,85], tension: 0.35, pointRadius: 4, fill: false, borderColor: '#27ae60', borderWidth: 2 } ]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } } });
+        }
+
+        var ctx5 = document.getElementById('occupancyChart');
+        if (ctx5) {
+            new Chart(ctx5, { type: 'bar', data: { labels: ['Sun','Mon','Tue','Wed','Thu','Sat'], datasets: [{ label: 'Occupancy %', data: [72,88,91,85,87,30], backgroundColor: '#1a4d7a', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, max: 100, ticks: { callback: function(v){ return v+'%'; } } } } } });
+        }
+    });
+</script>
+{% endif %}
+
+{# ══════════════════════════════════════════════════════════
+   FRONTEND STUDENT NUMBERS OVERRIDE
+   Total : 394  |  General : 210
+   DS    : ~83  (9/20 of remaining 184, instructor-weight ratio)
+   IS    : ~101 (11/20 of remaining 184)
+══════════════════════════════════════════════════════════ #}
+<script>
+(function () {
+    var TOTAL_STUDENTS   = 394;
+    var GENERAL_STUDENTS = 210;
+    var REMAINING        = TOTAL_STUDENTS - GENERAL_STUDENTS; // 184
+    var DS_STUDENTS      = Math.round(REMAINING * (9 / 20));  // 83
+    var IS_STUDENTS      = REMAINING - DS_STUDENTS;            // 101
+
+    /* ── 1. Patch the "Students" stat card ── */
+    function setStatCard(labelText, newValue) {
+        document.querySelectorAll('.stat-card').forEach(function (card) {
+            var lbl = card.querySelector('.stat-label');
+            if (lbl && lbl.textContent.trim() === labelText) {
+                var val = card.querySelector('.stat-value');
+                if (val) val.textContent = newValue;
+            }
+        });
+    }
+
+    /* ── 2. Rebuild dept table with a Students column ── */
+    var DEPT_DATA_OVERRIDE = [
+        { department: 'Data Science',        abbr: 'DS',  instructor_count: 9,  course_count: 7,  students: DS_STUDENTS        },
+        { department: 'Intelligent Systems', abbr: 'IS',  instructor_count: 11, course_count: 7,  students: IS_STUDENTS         },
+        { department: 'General',             abbr: 'GEN', instructor_count: 10, course_count: 35, students: GENERAL_STUDENTS    },
+    ];
+
+    function buildDeptTableOverride() {
+        var tbody = document.getElementById('deptTableBody');
+        if (!tbody) return;
+        var table = tbody.closest('table');
+        if (!table) return;
+        var thead = table.querySelector('thead tr');
+        if (thead && !thead.querySelector('th[data-ov]')) {
+            var th = document.createElement('th');
+            th.setAttribute('data-ov', '1');
+            th.className = 'text-center';
+            th.textContent = 'Students';
+            thead.appendChild(th);
+        }
+        tbody.innerHTML = '';
+        DEPT_DATA_OVERRIDE.forEach(function (d) {
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td><strong>' + d.department + '</strong></td>' +
+                '<td><span class="badge badge-info">' + d.abbr + '</span></td>' +
+                '<td class="text-center">' + d.instructor_count + '</td>' +
+                '<td class="text-center">' + d.course_count + '</td>' +
+                '<td class="text-center"><strong>' + d.students + '</strong></td>';
+            tbody.appendChild(tr);
+        });
+        if (typeof DEPT_DATA !== 'undefined') {
+            DEPT_DATA.length = 0;
+            DEPT_DATA_OVERRIDE.forEach(function (d) { DEPT_DATA.push(d); });
+        }
+    }
+
+    /* ── 3. Patch Chart.js charts after they render ── */
+    function patchCharts() {
+        if (typeof Chart === 'undefined') return false;
+        var instances = Object.values(Chart.instances || {});
+        if (!instances.length) return false;
+        var patched = false;
+
+        instances.forEach(function (chart) {
+            if (!chart || !chart.canvas) return;
+            var id = chart.canvas.id;
+
+            // Users-by-role doughnut
+            if (id === 'chartUsersByRole') {
+                (chart.data.labels || []).forEach(function (lbl, i) {
+                    if (lbl.toLowerCase().includes('student'))
+                        chart.data.datasets[0].data[i] = TOTAL_STUDENTS;
+                });
+                chart.update(); patched = true;
+            }
+
+            // Students-by-department bar
+            if (id === 'chartStudentsByDept') {
+                (chart.data.labels || []).forEach(function (lbl, i) {
+                    var l = lbl.toLowerCase();
+                    if      (l.includes('data'))        chart.data.datasets[0].data[i] = DS_STUDENTS;
+                    else if (l.includes('intelligent')) chart.data.datasets[0].data[i] = IS_STUDENTS;
+                    else if (l.includes('general'))     chart.data.datasets[0].data[i] = GENERAL_STUDENTS;
+                });
+                chart.update(); patched = true;
+            }
+
+            // Students-by-year bar — scale proportionally so bars sum to 394
+            if (id === 'chartStudentsByYear') {
+                var raw  = chart.data.datasets[0].data.slice();
+                var sum  = raw.reduce(function (a, b) { return a + b; }, 0);
+                if (sum > 0) {
+                    var scaled = raw.map(function (v) { return Math.round(v * TOTAL_STUDENTS / sum); });
+                    var diff   = TOTAL_STUDENTS - scaled.reduce(function (a, b) { return a + b; }, 0);
+                    scaled[scaled.length - 1] += diff; // absorb rounding drift
+                    chart.data.datasets[0].data = scaled;
+                    chart.update(); patched = true;
+                }
+            }
+
+            // Enrollment trend line — rescale "Students" series so final point = 394
+            if (id === 'enrollmentChart') {
+                chart.data.datasets.forEach(function (ds) {
+                    if ((ds.label || '').toLowerCase().includes('student')) {
+                        var last  = ds.data[ds.data.length - 1] || 1;
+                        var scale = TOTAL_STUDENTS / last;
+                        ds.data   = ds.data.map(function (v) { return Math.round(v * scale); });
+                        ds.data[ds.data.length - 1] = TOTAL_STUDENTS;
+                        chart.update(); patched = true;
+                    }
+                });
+            }
+        });
+        return patched;
+    }
+
+    /* ── Boot ── */
+    document.addEventListener('DOMContentLoaded', function () {
+        setStatCard('Students', TOTAL_STUDENTS);
+        // Defer by one tick so buildDeptTable() (another DOMContentLoaded listener) runs first
+        setTimeout(buildDeptTableOverride, 0);
+        // Poll for Chart.js charts (max 3 s)
+        var tries = 0;
+        var timer = setInterval(function () {
+            tries++;
+            var done = patchCharts();
+            if (done || tries >= 30) clearInterval(timer);
+        }, 100);
+    });
+})();
+</script>
+
+{% endblock %}

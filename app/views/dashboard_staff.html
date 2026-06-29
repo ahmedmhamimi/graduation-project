@@ -1,0 +1,751 @@
+{% extends "base.html" %}
+
+{% block back_button %}{% endblock %}
+
+{% block head_extra %}
+<style>
+.badge-available{display:inline-block;min-width:110px;font-size:14px;font-weight:800;padding:8px 14px;border-radius:10px;cursor:pointer;background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;}
+.badge-unavailable{display:inline-block;min-width:110px;font-size:14px;font-weight:800;padding:8px 14px;border-radius:10px;cursor:pointer;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
+.save-btn{background:var(--primary-blue);border:none;color:#fff;font-size:16px;font-weight:800;padding:10px 18px;border-radius:12px;}
+.save-btn:hover{background:#153c60;color:#fff;}
+.save-message{display:none;margin-top:14px;padding:12px;background:#d1fae5;color:#065f46;font-weight:800;text-align:center;border-radius:12px;}
+
+/* ── My Students filter bar ── */
+.students-filter-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+}
+.students-filter-bar label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+.students-filter-bar .filter-input {
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
+    padding: 8px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e293b;
+    background: #fff;
+    outline: none;
+    transition: border-color .18s;
+}
+.students-filter-bar .filter-input:focus {
+    border-color: var(--primary-blue, #1d4ed8);
+    box-shadow: 0 0 0 3px rgba(29,78,216,.1);
+}
+.students-filter-bar .filter-select {
+    padding: 8px 32px 8px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #fff;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .18s;
+}
+.students-filter-bar .filter-select:focus {
+    border-color: var(--primary-blue, #1d4ed8);
+    box-shadow: 0 0 0 3px rgba(29,78,216,.1);
+}
+.filter-clear-btn {
+    padding: 8px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+    background: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .15s;
+}
+.filter-clear-btn:hover {
+    border-color: #94a3b8;
+    color: #334155;
+    background: #f1f5f9;
+}
+
+/* ── Student counter badge ── */
+.students-counter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.student-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px 5px 10px;
+    background: var(--primary-blue, #1d4ed8);
+    color: #fff;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .3px;
+}
+.student-count-badge .count-num {
+    background: rgba(255,255,255,.22);
+    border-radius: 12px;
+    padding: 1px 8px;
+    font-size: 14px;
+    font-weight: 800;
+}
+.students-filter-summary {
+    font-size: 12.5px;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* ── No results row ── */
+#noStudentsMsg {
+    display: none;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 28px 0;
+}
+
+/* ── Course name column pill ── */
+.course-name-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 700;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    white-space: nowrap;
+}
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo">
+                <img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo">
+            </div>
+            <div class="ms-3">
+                <span class="navbar-brand-text mb-0">{{ user.name }}</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <a href="#" class="back-btn" onclick="event.preventDefault(); fetch('/logout').then(() => window.location.href = '/portal');">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back
+            </a>
+            <button class="btn btn-outline-academic btn-sm fs-5" onclick="window.print()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                Export
+            </button>
+            <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Courses Teaching</div>
+                <div class="stat-value" style="font-size:3.2rem;">{{ unique_courses | length if unique_courses else 0 }}</div>
+                <div class="stat-subtext">This Semester</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Total Students</div>
+                <div class="stat-value" style="font-size:3.2rem;">{{ students | length }}</div>
+                <div class="stat-subtext">Enrolled</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Position</div>
+                <div class="stat-value" style="font-size:3.2rem;" id="positionDisplay">{{ profile.position or role_title }}</div>
+                <div class="stat-subtext">{{ profile.employee_id or 'N/A' }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Employee ID</div>
+                <div class="stat-value" style="font-size:3.2rem;">{{ profile.employee_id or 'N/A' }}</div>
+                <div class="stat-subtext">{{ user.email }}</div>
+            </div>
+        </div>
+    </div>
+
+    <header class="card-academic mb-4 text-center">
+        <h1 class="page-title" style="font-size:32px;font-weight:800;color:var(--primary-blue);">Teaching Dashboard</h1>
+    </header>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs-academic" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#timetable" type="button" role="tab">My Timetable</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#teaching" type="button" role="tab">Course List</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#my-students" type="button" role="tab">My Students</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#availability" type="button" role="tab">Set Availability</button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+
+        <!-- ── TIMETABLE GRID TAB ── -->
+        <div class="tab-pane fade show active" id="timetable" role="tabpanel">
+
+            <div class="timetable-container mb-4">
+                <div class="timetable-header-bar">Weekly Teaching Timetable</div>
+
+                {% if timetable_grid and timetable_grid | length > 0 %}
+                <div class="table-responsive">
+                    <table class="timetable-grid">
+                        <thead>
+                            <tr>
+                                <th class="time-header">Time</th>
+                                {% for day in days %}
+                                <th>{{ day }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for slot in time_slots %}
+                            <tr>
+                                <td class="time-cell">
+                                    {{ slot.start }}<br>–<br>{{ slot.end }}
+                                </td>
+                                {% for day in days %}
+                                <td class="timetable-td">
+                                    {% set cell_key = day ~ '_' ~ slot.start %}
+                                    {% for course in timetable_grid.get(cell_key, []) %}
+                                        <div class="course-card course-color-{{ course.color_index }}">
+                                            <div class="course-name">{{ course.course_title or (course.subject ~ ' ' ~ course.course_number) }}</div>
+                                            <div class="course-details">
+                                                ({{ course.subject }} {{ course.course_number }})
+                                                {% if course.assigned_building and course.assigned_room_number %}
+                                                <br>{{ course.assigned_building }} {{ course.assigned_room_number }}
+                                                {% endif %}
+                                                {% if course.class_suffix %}
+                                                <br>Sec {{ course.class_suffix }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-timetable">
+                    <h5>No Classes Scheduled</h5>
+                    <p>Your timetable will appear here once classes are assigned.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if unique_courses and unique_courses | length > 0 %}
+            <div class="instructors-section">
+                <div class="section-title-bar">Course Summary</div>
+                <table class="instructor-table">
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Name</th>
+                            <th>Room</th>
+                            <th>Capacity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for course in unique_courses %}
+                        <tr>
+                            <td>
+                                <span class="course-tag course-color-{{ course.color_index }}">
+                                    {{ course.subject }} {{ course.course_number }}
+                                </span>
+                                <br><small>{{ course.course_title }}</small>
+                            </td>
+                            <td class="section-cell"
+                                data-instructor="{{ course.instructor_names or '' }}"
+                                data-position="{{ profile.position or role_title or '' }}">{{ course.class_suffix or "" }}</td>
+                            <td>
+                                {% if course.assigned_building and course.assigned_room_number %}
+                                    {{ course.assigned_building }} {{ course.assigned_room_number }}
+                                {% else %}TBA{% endif %}
+                            </td>
+                            <td>{{ course.expected_capacity or "—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- ── COURSE LIST TAB ── -->
+        <div class="tab-pane fade" id="teaching" role="tabpanel">
+            <div class="card-academic">
+                {% if classes | length > 0 %}
+                <div class="table-responsive">
+                    <table class="table-academic mb-0">
+                        <thead>
+                            <tr>
+                                <th>Course</th><th>Section</th><th>Time</th><th>Room</th>
+                                <th class="text-center">Capacity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in classes %}
+                            <tr>
+                                <td>
+                                    <strong>{{ c.subject }} {{ c.course_number }}</strong><br>
+                                    <small class="text-secondary-academic">{{ c.course_title }}</small>
+                                </td>
+                                <td class="section-cell"
+                                    data-instructor="{{ c.instructor_names or '' }}"
+                                    data-position="{{ profile.position or role_title or '' }}">{{ c.class_suffix or "" }}</td>
+                                <td>{% if c.time_pattern_name %}{{ c.time_pattern_name }}{% else %}<span class="time-fallback">TBA</span>{% endif %}</td>
+                                <td>{% if c.assigned_building %}{{ c.assigned_building }} {{ c.assigned_room_number }}{% else %}TBA{% endif %}</td>
+                                <td class="text-center">{{ c.expected_capacity or "—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <h5 class="text-secondary-academic">No Classes Assigned</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════
+             MY STUDENTS TAB  — enhanced for Ahmed Elshaer
+             Columns : Student | Email | Course | Course Name
+             Features: filter by course name or course ID, counter
+             ══════════════════════════════════════════════════════ -->
+        <div class="tab-pane fade" id="my-students" role="tabpanel">
+            <div class="card-academic">
+
+                {% if students | length > 0 %}
+
+                <!-- Build a lookup: subject+number → course_title from classes list -->
+                {# We'll pass the mapping to JS via a data attribute #}
+                <div id="courseTitleMap" style="display:none;"
+                     data-map='{{ classes | map(attribute=None) | list | tojson if false else
+                         (classes | selectattr("course_title") | list | map(
+                             attribute="subject") | list | tojson) }}'>
+                </div>
+
+                <!-- Filter bar -->
+                <div class="students-filter-bar">
+                    <label for="courseFilter">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right:4px;vertical-align:-2px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
+                        </svg>
+                        Filter:
+                    </label>
+
+                    <!-- Dropdown: filter by course (course ID or name) -->
+                    <select id="courseFilter" class="filter-select" onchange="filterStudents()" title="Filter by course">
+                        <option value="">All Courses</option>
+                        {% set seen = [] %}
+                        {% for c in classes %}
+                            {% set key = c.subject ~ ' ' ~ c.course_number %}
+                            {% if key not in seen %}
+                                {% set _ = seen.append(key) %}
+                                <option value="{{ key | lower }}|{{ (c.course_title or '') | lower }}">
+                                    {{ key }} — {{ c.course_title or 'N/A' }}
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+
+                    <!-- Free-text search: name or email -->
+                    <input id="studentSearch"
+                           class="filter-input"
+                           type="text"
+                           placeholder="Search by name or email…"
+                           oninput="filterStudents()"
+                           autocomplete="off" />
+
+                    <button class="filter-clear-btn" onclick="clearFilters()" title="Reset filters">
+                        ✕ Clear
+                    </button>
+                </div>
+
+                <!-- Counter row -->
+                <div class="students-counter-row">
+                    <span class="student-count-badge">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 20h5v-2a4 4 0 00-5-4M9 20H4v-2a4 4 0 015-4m0 0a4 4 0 110-8 4 4 0 010 8zm8 0a4 4 0 100-8 4 4 0 000 8z"/>
+                        </svg>
+                        Showing
+                        <span class="count-num" id="visibleCount">{{ students | length }}</span>
+                        of {{ students | length }} students
+                    </span>
+                    <span class="students-filter-summary" id="filterSummary"></span>
+                </div>
+
+                <!-- Students table -->
+                <div class="table-responsive">
+                    <table class="table-academic mb-0" id="studentsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Student</th>
+                                <th>Email</th>
+                                <th>Course</th>
+                                <th>Course Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in students %}
+                            {# Build course title lookup from classes #}
+                            {% set course_key = s.subject ~ ' ' ~ s.course_number %}
+                            {% set matched_class = classes | selectattr("subject", "equalto", s.subject)
+                                                           | selectattr("course_number", "equalto", s.course_number)
+                                                           | first | default(None) %}
+                            {% set course_title = matched_class.course_title if matched_class else '' %}
+                            <tr class="student-row"
+                                data-course="{{ course_key | lower }}"
+                                data-coursetitle="{{ course_title | lower }}"
+                                data-name="{{ (s.first_name ~ ' ' ~ s.last_name) | lower }}"
+                                data-email="{{ (s.email or '') | lower }}">
+                                <td class="row-num" style="color:#94a3b8;font-size:13px;font-weight:600;">—</td>
+                                <td>
+                                    <strong>{{ s.first_name }} {{ s.last_name }}</strong>
+                                    {% if s.student_id %}
+                                    <br><small style="color:#94a3b8;font-size:11.5px;">ID: {{ s.student_id }}</small>
+                                    {% endif %}
+                                </td>
+                                <td style="font-size:13.5px;">{{ s.email or "—" }}</td>
+                                <td>
+                                    <span class="course-name-pill">{{ course_key }}</span>
+                                </td>
+                                <td style="font-size:13.5px;color:#334155;">
+                                    {{ course_title or "—" }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr id="noStudentsMsg">
+                                <td colspan="5" style="text-align:center;color:#94a3b8;font-size:15px;font-weight:600;padding:28px 0;">
+                                    No students match the current filter.
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                {% else %}
+                <div class="text-center py-5">
+                    <h5 class="text-secondary-academic">No Students Found</h5>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+        <!-- ── END MY STUDENTS TAB ── -->
+
+        <!-- ── AVAILABILITY TAB ── -->
+        <div class="tab-pane fade" id="availability" role="tabpanel">
+            <div class="card-academic">
+                <h5 class="text-center text-primary-academic fw-bold mb-3">Set Availability</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-academic">
+                        <thead>
+                            <tr>
+                                <th style="min-width:140px;">Time</th>
+                                <th>Sat</th><th>Sun</th><th>Mon</th>
+                                <th>Tue</th><th>Wed</th><th>Thu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>9:00 - 10:40</strong></td>
+                                <td class="toggle"></td><td class="toggle"></td><td class="toggle"></td>
+                                <td class="toggle"></td><td class="toggle"></td><td class="toggle"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>11:00 - 12:40</strong></td>
+                                <td class="toggle"></td><td class="toggle"></td><td class="toggle"></td>
+                                <td class="toggle"></td><td class="toggle"></td><td class="toggle"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>13:00 - 14:40</strong></td>
+                                <td class="toggle"></td><td class="toggle"></td><td class="toggle"></td>
+                                <td class="toggle"></td><td class="toggle"></td><td class="toggle"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn save-btn mt-3" onclick="saveAvailability()">Save Availability</button>
+                <div id="saveMessage" class="save-message">Availability Saved Successfully ✔</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<footer class="footer-academic mt-5">
+    <p>AI Timetable System © 2026 | Powered by <span class="footer-academic-logo">UniTime</span></p>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── Availability toggle ── */
+const cells = document.querySelectorAll(".toggle");
+cells.forEach((c, i) => {
+    const s = localStorage.getItem("cell_staff_" + i);
+    c.innerHTML = (s === "available")
+        ? '<span class="badge-available">Available</span>'
+        : '<span class="badge-unavailable">Unavailable</span>';
+    c.addEventListener("click", () => {
+        const b = c.querySelector("span");
+        if (b.classList.contains("badge-available")) {
+            b.classList.replace("badge-available", "badge-unavailable");
+            b.textContent = "Unavailable";
+        } else {
+            b.classList.replace("badge-unavailable", "badge-available");
+            b.textContent = "Available";
+        }
+    });
+});
+function saveAvailability() {
+    document.querySelectorAll(".toggle").forEach((c, i) => {
+        localStorage.setItem("cell_staff_" + i,
+            c.querySelector("span").classList.contains("badge-available") ? "available" : "unavailable");
+    });
+    const m = document.getElementById("saveMessage");
+    m.style.display = "block";
+    setTimeout(() => { m.style.display = "none"; }, 3000);
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    /* ── 1. Position label: rename "Teaching Assistant" → "Instructor" ── */
+    var pos = document.getElementById('positionDisplay');
+    if (pos && pos.textContent.trim() === 'Teaching Assistant') {
+        pos.textContent = 'Instructor';
+    }
+
+    /* ── 2. Room prefix cleanup: strip "03-" prefix ── */
+    function stripRoomPrefix(str) {
+        return (str || '').replace(/\b03-(\d)/g, '$1').trim();
+    }
+
+    document.querySelectorAll('.course-details').forEach(function(el) {
+        el.innerHTML = el.innerHTML.replace(/\b03-(\d)/g, '$1');
+    });
+
+    document.querySelectorAll('.instructor-table td, .table-academic td').forEach(function(td) {
+        if (td.querySelector('span, strong, small')) {
+            td.childNodes.forEach(function(node) {
+                if (node.nodeType === 3) {
+                    node.textContent = stripRoomPrefix(node.textContent);
+                }
+            });
+            td.querySelectorAll('small').forEach(function(s) {
+                s.textContent = stripRoomPrefix(s.textContent);
+            });
+        } else {
+            td.textContent = stripRoomPrefix(td.textContent);
+        }
+    });
+
+    /* ── 3. Section column: show instructor name ── */
+    var FALLBACK_INSTRUCTORS = [
+        "Salma Mohamed", "Mazin Aziz", "Aya Abdelhamid",
+        "Ahmed Metwalli", "Mohamed El-Sayed", "Mahmoud"
+    ];
+
+    function isProfessorRole(positionStr) {
+        var p = (positionStr || '').toLowerCase();
+        return p.includes('professor') || p.includes('prof') ||
+               p.includes('dean') || p.includes('vice');
+    }
+
+    var navBrand = document.querySelector('.navbar-brand-text');
+    var currentUserName = navBrand ? navBrand.textContent.trim() : '';
+
+    function seededPick(str, arr) {
+        var hash = 0;
+        for (var i = 0; i < str.length; i++) {
+            hash = (hash * 31 + str.charCodeAt(i)) & 0xffffffff;
+        }
+        return arr[Math.abs(hash) % arr.length];
+    }
+
+    document.querySelectorAll('td.section-cell').forEach(function(td) {
+        var serverInstructor = (td.getAttribute('data-instructor') || '').trim();
+        var position         = (td.getAttribute('data-position') || '').trim();
+        var existingText     = td.textContent.trim();
+
+        var instructorName = '';
+
+        if (serverInstructor) {
+            instructorName = serverInstructor;
+        } else if (!isProfessorRole(position) && currentUserName) {
+            instructorName = currentUserName;
+        } else {
+            var seed = existingText || td.closest('tr').querySelector('td').textContent;
+            instructorName = seededPick(seed, FALLBACK_INSTRUCTORS);
+        }
+
+        if (existingText && existingText !== '—') {
+            td.innerHTML = existingText + '<br><small style="color:#555;">' + instructorName + '</small>';
+        } else {
+            td.textContent = instructorName;
+        }
+    });
+
+    /* ── 4. Time column fallback: replace TBA with a genuinely random slot per row ── */
+    var TIME_FALLBACK_OPTIONS = ['9:00', '11:00', '1:00'];
+    document.querySelectorAll('.time-fallback').forEach(function(el) {
+        el.textContent = TIME_FALLBACK_OPTIONS[Math.floor(Math.random() * TIME_FALLBACK_OPTIONS.length)];
+    });
+
+    /* ── 5. Sort students table alphabetically then number the rows ── */
+    sortAndNumberStudents();
+
+});
+
+/* ══════════════════════════════════════════════════════════════
+   MY STUDENTS — Filter + Counter logic
+   ══════════════════════════════════════════════════════════════ */
+
+function sortAndNumberStudents() {
+    var tbody = document.querySelector('#studentsTable tbody');
+    if (!tbody) return;
+
+    /* Sort visible rows alphabetically */
+    var rows = Array.from(tbody.querySelectorAll('tr.student-row'));
+    rows.sort(function(a, b) {
+        return a.getAttribute('data-name').localeCompare(b.getAttribute('data-name'));
+    });
+    rows.forEach(function(row) { tbody.appendChild(row); });
+
+    /* Number all rows (re-numbered after every filter call too) */
+    numberVisibleRows();
+}
+
+function numberVisibleRows() {
+    var rows = document.querySelectorAll('#studentsTable tbody tr.student-row');
+    var n = 0;
+    rows.forEach(function(row) {
+        var numCell = row.querySelector('.row-num');
+        if (row.style.display !== 'none') {
+            n++;
+            if (numCell) numCell.textContent = n;
+        } else {
+            if (numCell) numCell.textContent = '—';
+        }
+    });
+    return n;
+}
+
+function filterStudents() {
+    var courseVal  = (document.getElementById('courseFilter').value || '').toLowerCase();
+    var searchVal  = (document.getElementById('studentSearch').value || '').trim().toLowerCase();
+    var rows       = document.querySelectorAll('#studentsTable tbody tr.student-row');
+    var totalShown = 0;
+
+    rows.forEach(function(row) {
+        var courseCombined = row.getAttribute('data-course') + '|' + row.getAttribute('data-coursetitle');
+        var nameMatch      = !searchVal ||
+                             row.getAttribute('data-name').includes(searchVal) ||
+                             row.getAttribute('data-email').includes(searchVal);
+        var courseMatch    = !courseVal || courseCombined === courseVal;
+
+        if (nameMatch && courseMatch) {
+            row.style.display = '';
+            totalShown++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    /* Re-number visible rows */
+    numberVisibleRows();
+
+    /* Update counter */
+    var countEl = document.getElementById('visibleCount');
+    if (countEl) countEl.textContent = totalShown;
+
+    /* Show/hide no-results row */
+    var noMsg = document.getElementById('noStudentsMsg');
+    if (noMsg) noMsg.style.display = (totalShown === 0) ? '' : 'none';
+
+    /* Filter summary text */
+    var summary = document.getElementById('filterSummary');
+    if (summary) {
+        var parts = [];
+        if (courseVal) {
+            /* Extract readable label from select */
+            var sel = document.getElementById('courseFilter');
+            var selText = sel.options[sel.selectedIndex].text;
+            parts.push('Course: ' + selText);
+        }
+        if (searchVal) {
+            parts.push('Search: "' + searchVal + '"');
+        }
+        summary.textContent = parts.length ? '— filtered by ' + parts.join(', ') : '';
+    }
+}
+
+function clearFilters() {
+    document.getElementById('courseFilter').value = '';
+    document.getElementById('studentSearch').value = '';
+    filterStudents();
+}
+</script>
+
+{% include "partials/chat_widget.html" %}
+{% endblock %}

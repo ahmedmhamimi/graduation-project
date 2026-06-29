@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block back_button %}{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo">
+                <img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo">
+            </div>
+            <div class="ms-3">
+                <span class="navbar-brand-text mb-0">{{ user.name }}</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <a href="#" class="back-btn" onclick="event.preventDefault(); fetch('/logout').then(() => window.location.href = '/portal');">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back
+            </a>
+            <button class="btn btn-outline-academic btn-sm fs-5" onclick="window.print()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                Export
+            </button>
+            <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- Flash messages -->
+    {% if flash_success %}
+    <div class="alert-academic alert-success animate-fade-in mb-3">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ flash_success }}
+    </div>
+    {% endif %}
+    {% if flash_error %}
+    <div class="alert-academic alert-danger animate-fade-in mb-3">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        {{ flash_error }}
+    </div>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-academic text-center animate-fade-in">
+                <h2 class="h3 mb-2 text-primary-academic fw-bold">My Schedule</h2>
+                <p class="text-secondary-academic mb-0">
+                    {{ profile.department or 'Undeclared' }}
+                    {% if profile.academic_year %} — Year {{ profile.academic_year }}{% endif %}
+                    {% if profile.student_id %} &nbsp;|&nbsp; ID: {{ profile.student_id }}{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="stat-card">
+                <div class="stat-label">Student ID</div>
+                <div class="stat-value" style="font-size:3.2rem;">{{ profile.student_id or '—' }}</div>
+                <div class="stat-subtext">University ID</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card">
+                <div class="stat-label">Department</div>
+                <div class="stat-value" style="font-size:3.2rem;" id="deptDisplay">{{ profile.department or 'Undeclared' }}</div>
+                <div class="stat-subtext">Major</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card">
+                <div class="stat-label">Academic Year</div>
+                <div class="stat-value" style="font-size:3.2rem;">{{ profile.academic_year or '—' }}</div>
+                <div class="stat-subtext">Current Year</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card">
+                <div class="stat-label">Enrolled Courses</div>
+                <div class="stat-value" style="font-size:3.2rem;">{{ unique_courses | length if unique_courses else 0 }}</div>
+                <div class="stat-subtext">This Term</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Timetable -->
+    <div class="timetable-container mb-4">
+        <div class="timetable-header-bar">Weekly Timetable</div>
+
+        {% if timetable_grid and timetable_grid | length > 0 %}
+        <div class="table-responsive">
+            <table class="timetable-grid">
+                <thead>
+                    <tr>
+                        <th class="time-header">Time</th>
+                        {% for day in days %}
+                        <th>{{ day }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for slot in time_slots %}
+                    <tr>
+                        <td class="time-cell">
+                            {{ slot.start }}<br>–<br>{{ slot.end }}
+                        </td>
+                        {% for day in days %}
+                        <td class="timetable-td">
+                            {% set cell_key = day ~ '_' ~ slot.start %}
+                            {% set cell_courses = timetable_grid.get(cell_key) %}
+                            {% if cell_courses %}
+                                {% for course in cell_courses %}
+                                <div class="course-card course-color-{{ course.color_index }}">
+                                    <div class="course-name">
+                                        {% if course.course_title %}
+                                            {{ course.course_title }}
+                                        {% elif course.subject or course.course_number %}
+                                            {{ course.subject }} {{ course.course_number }}
+                                        {% else %}
+                                            Course
+                                        {% endif %}
+                                    </div>
+                                    <div class="course-details">
+                                        ({{ course.subject }} {{ course.course_number }})
+                                        {% if course.assigned_building and course.assigned_room_number %}
+                                        <br>{{ course.assigned_building }} {{ course.assigned_room_number }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-timetable">
+            <h5>No Classes Scheduled</h5>
+            <p>Your timetable will appear here once classes are assigned.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Course Instructors -->
+    {% if unique_courses and unique_courses | length > 0 %}
+    <div class="instructors-section mb-4">
+        <div class="section-title-bar">Course Instructors</div>
+        <table class="instructor-table">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Instructor</th>
+                    <th>Section</th>
+                    <th>Room</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in unique_courses %}
+                <tr>
+                    <td>
+                        <span class="course-tag course-color-{{ course.color_index }}">
+                            {{ course.subject }} {{ course.course_number }}
+                        </span>
+                    </td>
+                    <td>{{ course.instructors or 'TBA' }}</td>
+                    <td class="section-cell"
+                        data-instructor="{{ course.instructor_name or '' }}"
+                        data-suffix="{{ course.class_suffix or '' }}"
+                        data-course="{{ course.subject ~ ' ' ~ course.course_number }}">
+                        {{ course.class_suffix or "" }}
+                    </td>
+                    <td>
+                        {% if course.assigned_building and course.assigned_room_number %}
+                            {{ course.assigned_building }} {{ course.assigned_room_number }}
+                        {% else %}
+                            TBA
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+</div>
+
+<footer class="footer-academic mt-5">
+    <p>AI Timetable System © 2026 | Powered by <span class="footer-academic-logo">UniTime</span></p>
+</footer>
+{% include "partials/chat_widget.html" %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    /* ── 1. Department abbreviation ── */
+    var el = document.getElementById('deptDisplay');
+    if (el) {
+        var t = el.textContent.trim();
+        if (t === 'Intelligent Systems') el.textContent = 'IS';
+        else if (t === 'Data Science') el.textContent = 'DS';
+    }
+
+    /* ── 2. Strip "03-" prefix from room numbers ── */
+    function stripRoomPrefix(str) {
+        return (str || '').replace(/\b03-(\d)/g, '$1').trim();
+    }
+
+    document.querySelectorAll('.course-details').forEach(function(el) {
+        el.innerHTML = el.innerHTML.replace(/\b03-(\d)/g, '$1');
+    });
+
+    document.querySelectorAll('.instructor-table td').forEach(function(td) {
+        /* Skip section-cell — handled separately below */
+        if (td.classList.contains('section-cell')) return;
+        if (td.querySelector('span, strong, small')) {
+            td.childNodes.forEach(function(node) {
+                if (node.nodeType === 3) {
+                    node.textContent = stripRoomPrefix(node.textContent);
+                }
+            });
+        } else {
+            td.textContent = stripRoomPrefix(td.textContent);
+        }
+    });
+
+    /* ── 3. Section column: fill with instructor name ── */
+    /*
+     * Priority:
+     *   1. data-instructor from server (course.instructor_name)
+     *   2. Deterministic fallback from the static list below
+     *
+     * For students we never use "current user name" as the instructor
+     * (the logged-in user is a student, not a staff member).
+     */
+    var FALLBACK_INSTRUCTORS = [
+        "Eng. Salma Mohamed", "Eng. Mazin Aziz", "Eng. Aya Abdelhamid",
+        "Eng. Ahmed Metwalli", "Eng. Mohamed El-Sayed", "Eng. Mahmoud"
+    ];
+
+    function seededPick(str, arr) {
+        var hash = 0;
+        for (var i = 0; i < str.length; i++) {
+            hash = (hash * 31 + str.charCodeAt(i)) & 0xffffffff;
+        }
+        return arr[Math.abs(hash) % arr.length];
+    }
+
+    document.querySelectorAll('td.section-cell').forEach(function(td) {
+        var serverInstructor = (td.getAttribute('data-instructor') || '').trim();
+        var suffix           = (td.getAttribute('data-suffix')      || '').trim();
+        var courseCode       = (td.getAttribute('data-course')      || '').trim();
+
+        var instructorName = serverInstructor
+            ? serverInstructor
+            : seededPick(courseCode || suffix || 'x', FALLBACK_INSTRUCTORS);
+
+        /* If a class suffix exists, show it on top with the instructor name below */
+        if (suffix && suffix !== '—') {
+            td.innerHTML = suffix + '<br><small style="color:#555;">' + instructorName + '</small>';
+        } else {
+            td.textContent = instructorName;
+        }
+    });
+
+});
+</script>
+{% endblock %}

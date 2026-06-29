@@ -1,0 +1,2381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title | default("University Timetable System") }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="{% block body_class %}bg-light-academic{% endblock %}">
+
+{% block navbar %}{% endblock %}
+
+{% if flash_success %}
+
+<div class="container-fluid px-4 mt-3">
+    <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 12px;">
+        <strong>✅</strong> {{ flash_success }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+{% endif %}
+{% if flash_error %}
+<div class="container-fluid px-4 mt-3">
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius: 12px;">
+        <strong>⚠️</strong> {{ flash_error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+{% endif %}
+
+{% block content %}{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">{{ title }}</h2>
+    <p class="text-slate-500 text-sm">{{ permissions.description }}</p>
+</div>
+
+<!-- Tabs -->
+<div class="flex border-b border-slate-200 mb-6 overflow-x-auto">
+    <button onclick="openTab(event, 'tab-overview')" class="tab-link active px-4 py-3 border-b-2 border-sky-500 text-sky-600 font-medium text-sm whitespace-nowrap">Overview</button>
+    <button onclick="openTab(event, 'tab-instructors')" class="tab-link px-4 py-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">Instructors</button>
+    <button onclick="openTab(event, 'tab-courses')" class="tab-link px-4 py-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">Courses</button>
+    <button onclick="openTab(event, 'tab-rooms')" class="tab-link px-4 py-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">Rooms</button>
+    <button onclick="openTab(event, 'tab-classes')" class="tab-link px-4 py-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">Classes</button>
+    {% if can_view_students %}
+    <button onclick="openTab(event, 'tab-students')" class="tab-link px-4 py-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">Students</button>
+    {% endif %}
+</div>
+
+<!-- ═══════ OVERVIEW TAB ═══════ -->
+<div id="tab-overview" class="tab-content">
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div class="bg-white border border-slate-200 rounded-lg p-4">
+            <p class="text-xs text-slate-500 font-medium uppercase">Instructors</p>
+            <p class="text-2xl font-bold text-slate-800 mt-1">{{ stats.total_instructors }}</p>
+            <p class="text-xs text-slate-400">{{ stats.instructors_assigned }} assigned</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-4">
+            <p class="text-xs text-slate-500 font-medium uppercase">Courses</p>
+            <p class="text-2xl font-bold text-slate-800 mt-1">{{ stats.total_courses }}</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-4">
+            <p class="text-xs text-slate-500 font-medium uppercase">Classes</p>
+            <p class="text-2xl font-bold text-slate-800 mt-1">{{ stats.total_classes }}</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-4">
+            <p class="text-xs text-slate-500 font-medium uppercase">Rooms</p>
+            <p class="text-2xl font-bold text-slate-800 mt-1">{{ stats.total_rooms }}</p>
+            <p class="text-xs text-slate-400">{{ stats.rooms_in_use }} in use</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-4">
+            <p class="text-xs text-slate-500 font-medium uppercase">Students</p>
+            <p class="text-2xl font-bold text-slate-800 mt-1">{{ stats.total_students }}</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-4">
+            <p class="text-xs text-slate-500 font-medium uppercase">Seat Capacity</p>
+            <p class="text-2xl font-bold text-slate-800 mt-1">{{ stats.total_room_capacity }}</p>
+        </div>
+    </div>
+
+    <!-- ═══ PLATFORM USER STATS (from Supabase) ═══ -->
+    {% if user_stats %}
+    <div class="bg-white border border-slate-200 rounded-lg shadow-sm mb-6">
+        <div class="p-4 border-b border-slate-200 bg-slate-50">
+            <h3 class="font-semibold text-slate-700">Platform Users (Supabase)</h3>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4">
+            <div class="bg-slate-50 rounded-lg p-3">
+                <p class="text-xs text-slate-500 font-medium uppercase">Total Users</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ user_stats.total_users }}</p>
+                <p class="text-xs text-slate-400">Registered</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-3">
+                <p class="text-xs text-slate-500 font-medium uppercase">Students</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ user_stats.by_role.get('student', 0) }}</p>
+                <p class="text-xs text-slate-400">Enrolled</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-3">
+                <p class="text-xs text-slate-500 font-medium uppercase">Staff</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ user_stats.by_role.get('ta', 0) + user_stats.by_role.get('lecturer', 0) }}</p>
+                <p class="text-xs text-slate-400">TA + Lecturers</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-3">
+                <p class="text-xs text-slate-500 font-medium uppercase">Schedulers</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ user_stats.by_role.get('scheduler', 0) }}</p>
+                <p class="text-xs text-slate-400">Active</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-3">
+                <p class="text-xs text-slate-500 font-medium uppercase">Admins</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ user_stats.by_role.get('dean', 0) + user_stats.by_role.get('vicedean', 0) }}</p>
+                <p class="text-xs text-slate-400">Dean + Vice Dean</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-3">
+                <p class="text-xs text-slate-500 font-medium uppercase">This Week</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ user_stats.recent_signups }}</p>
+                <p class="text-xs text-slate-400">New Signups</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ USER CHARTS (from Supabase) ═══ -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm p-4" style="min-height:280px;">
+            <h6 class="font-semibold text-slate-700 mb-2">Users by Role</h6>
+            <div style="height:220px;"><canvas id="chartUsersByRole"></canvas></div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm p-4" style="min-height:280px;">
+            <h6 class="font-semibold text-slate-700 mb-2">Students by Department</h6>
+            <div style="height:220px;"><canvas id="chartStudentsByDept"></canvas></div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm p-4" style="min-height:280px;">
+            <h6 class="font-semibold text-slate-700 mb-2">Students by Year</h6>
+            <div style="height:220px;"><canvas id="chartStudentsByYear"></canvas></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if stats.departments %}
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm mb-6">
+        <div class="p-4 border-b border-slate-200 bg-slate-50">
+            <h3 class="font-semibold text-slate-700">Department Breakdown</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-slate-200">
+                        <th class="text-left p-3 font-semibold text-slate-600">Department</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Code</th>
+                        <th class="text-center p-3 font-semibold text-slate-600">Instructors</th>
+                        <th class="text-center p-3 font-semibold text-slate-600">Courses</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dept in stats.departments %}
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-3 font-medium text-slate-800">{{ dept.department }}</td>
+                        <td class="p-3"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">{{ dept.abbr }}</span></td>
+                        <td class="p-3 text-center text-slate-700">{{ dept.instructor_count }}</td>
+                        <td class="p-3 text-center text-slate-700">{{ dept.course_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if stats.room_utilization %}
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div class="p-4 border-b border-slate-200 bg-slate-50">
+            <h3 class="font-semibold text-slate-700">Room Utilization (Top 20)</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-slate-200">
+                        <th class="text-left p-3 font-semibold text-slate-600">Room</th>
+                        <th class="text-center p-3 font-semibold text-slate-600">Capacity</th>
+                        <th class="text-center p-3 font-semibold text-slate-600">Classes</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for room in stats.room_utilization %}
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-3 font-medium text-slate-800">{{ room.room_name }}</td>
+                        <td class="p-3 text-center text-slate-700">{{ room.capacity }}</td>
+                        <td class="p-3 text-center text-slate-700">{{ room.class_count }}</td>
+                        <td class="p-3">
+                            <div class="w-full bg-slate-100 rounded-full h-2">
+                                {% set pct = [room.class_count * 10, 100] | min %}
+                                <div class="bg-sky-500 h-2 rounded-full" style="width: {{ pct }}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ═══════ INSTRUCTORS TAB ═══════ -->
+<div id="tab-instructors" class="tab-content hidden">
+    {% if can_write_instructors %}
+    <div class="mb-4 flex justify-end">
+        <button onclick="openModal('modal-add-instructor')"
+                class="px-4 py-2 bg-sky-600 text-white text-sm rounded hover:bg-sky-700 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Instructor
+        </button>
+    </div>
+    {% endif %}
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="text-left p-3 font-semibold text-slate-600">Name</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Position</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Department</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Email</th>
+                        {% if can_write_instructors %}<th class="text-center p-3 font-semibold text-slate-600">Actions</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in instructors %}
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-3 font-medium text-slate-800">{{ i.first_name }} {{ i.middle_name or "" }} {{ i.last_name }}</td>
+                        <td class="p-3 text-slate-600">{{ i.position_label or "—" }}</td>
+                        <td class="p-3"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">{{ i.dept_abbr }}</span> {{ i.department_name }}</td>
+                        <td class="p-3 text-slate-600">{{ i.email or "—" }}</td>
+                        {% if can_write_instructors %}
+                        <td class="p-3 text-center whitespace-nowrap">
+                            <a href="/manage/instructor/edit/{{ i.id }}" class="text-sky-600 hover:underline text-xs mr-2">Edit</a>
+                            <form action="/manage/instructor/delete/{{ i.id }}" method="POST" class="inline" onsubmit="return confirm('Delete this instructor?')">
+                                <input type="hidden" name="session_id" value="{{ session_id }}">
+                                <button type="submit" class="text-red-500 hover:underline text-xs">Delete</button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    {% if not instructors %}
+                    <tr><td colspan="5" class="p-8 text-center text-slate-400">No instructors found.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ COURSES TAB ═══════ -->
+<div id="tab-courses" class="tab-content hidden">
+    {% if can_write_courses %}
+    <div class="mb-4 flex justify-end">
+        <button onclick="openModal('modal-add-course')"
+                class="px-4 py-2 bg-sky-600 text-white text-sm rounded hover:bg-sky-700 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Course
+        </button>
+    </div>
+    {% endif %}
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="text-left p-3 font-semibold text-slate-600">Course</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Title</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Department</th>
+                        <th class="text-center p-3 font-semibold text-slate-600">Expected</th>
+                        {% if can_write_courses %}<th class="text-center p-3 font-semibold text-slate-600">Actions</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in courses %}
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-3 font-bold text-slate-800">{{ c.subject }} {{ c.course_number }}</td>
+                        <td class="p-3 text-slate-700">{{ c.title or "—" }}</td>
+                        <td class="p-3 text-slate-600">{{ c.department_name or "—" }}</td>
+                        <td class="p-3 text-center text-slate-600">{{ c.expected_students or 0 }}</td>
+                        {% if can_write_courses %}
+                        <td class="p-3 text-center whitespace-nowrap">
+                            <a href="/manage/course/edit/{{ c.id }}" class="text-sky-600 hover:underline text-xs mr-2">Edit</a>
+                            <form action="/manage/course/delete/{{ c.id }}" method="POST" class="inline" onsubmit="return confirm('Delete this course and all its classes?')">
+                                <input type="hidden" name="session_id" value="{{ session_id }}">
+                                <button type="submit" class="text-red-500 hover:underline text-xs">Delete</button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    {% if not courses %}
+                    <tr><td colspan="5" class="p-8 text-center text-slate-400">No courses found.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ ROOMS TAB ═══════ -->
+<div id="tab-rooms" class="tab-content hidden">
+    {% if can_write_rooms %}
+    <div class="mb-4 flex justify-end">
+        <button onclick="openModal('modal-add-room')"
+                class="px-4 py-2 bg-sky-600 text-white text-sm rounded hover:bg-sky-700 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Room
+        </button>
+    </div>
+    {% endif %}
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="text-left p-3 font-semibold text-slate-600">Room</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Building</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Type</th>
+                        <th class="text-center p-3 font-semibold text-slate-600">Capacity</th>
+                        <th class="text-center p-3 font-semibold text-slate-600">Exam Cap</th>
+                        {% if can_write_rooms %}<th class="text-center p-3 font-semibold text-slate-600">Actions</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rooms %}
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-3 font-medium text-slate-800">{{ r.building_abbr }} {{ r.room_number }}</td>
+                        <td class="p-3 text-slate-600">{{ r.building_name }}</td>
+                        <td class="p-3 text-slate-600">{{ r.room_type_label or "—" }}</td>
+                        <td class="p-3 text-center text-slate-700">{{ r.capacity }}</td>
+                        <td class="p-3 text-center text-slate-700">{{ r.exam_capacity }}</td>
+                        {% if can_write_rooms %}
+                        <td class="p-3 text-center whitespace-nowrap">
+                            <a href="/manage/room/edit/{{ r.id }}" class="text-sky-600 hover:underline text-xs mr-2">Edit</a>
+                            <form action="/manage/room/delete/{{ r.id }}" method="POST" class="inline" onsubmit="return confirm('Delete this room?')">
+                                <input type="hidden" name="session_id" value="{{ session_id }}">
+                                <button type="submit" class="text-red-500 hover:underline text-xs">Delete</button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    {% if not rooms %}
+                    <tr><td colspan="6" class="p-8 text-center text-slate-400">No rooms found.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ CLASSES TAB ═══════ -->
+<div id="tab-classes" class="tab-content hidden">
+    {% if can_write_classes %}
+    <div class="mb-4 flex justify-end">
+        <button onclick="openModal('modal-add-class')"
+                class="px-4 py-2 bg-sky-600 text-white text-sm rounded hover:bg-sky-700 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Class
+        </button>
+    </div>
+    {% endif %}
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="text-left p-3 font-semibold text-slate-600">Course</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Section</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Time</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Room</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Instructor(s)</th>
+                        <th class="text-center p-3 font-semibold text-slate-600">Capacity</th>
+                        {% if can_write_classes %}<th class="text-center p-3 font-semibold text-slate-600">Actions</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in classes %}
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-3">
+                            <span class="font-bold text-slate-800">{{ c.subject }} {{ c.course_number }}</span>
+                            <br><span class="text-xs text-slate-500">{{ c.course_title }}</span>
+                        </td>
+                        <td class="p-3 text-slate-600">{{ c.class_suffix or "—" }}</td>
+                        <td class="p-3 text-slate-700">{{ c.time_pattern_name or "TBA" }}</td>
+                        <td class="p-3">
+                            {% if c.assigned_building %}{{ c.assigned_building }} {{ c.assigned_room_number }}{% else %}<span class="text-slate-400">TBA</span>{% endif %}
+                        </td>
+                        <td class="p-3 text-slate-700">{{ c.instructor_names or "TBA" }}</td>
+                        <td class="p-3 text-center text-slate-600">{{ c.expected_capacity or "—" }}</td>
+                        {% if can_write_classes %}
+                        <td class="p-3 text-center whitespace-nowrap">
+                            <form action="/manage/class/delete/{{ c.id }}" method="POST" class="inline" onsubmit="return confirm('Delete this class section?')">
+                                <input type="hidden" name="session_id" value="{{ session_id }}">
+                                <button type="submit" class="text-red-500 hover:underline text-xs">Delete</button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    {% if not classes %}
+                    <tr><td colspan="7" class="p-8 text-center text-slate-400">No classes found.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ STUDENTS TAB ═══════ -->
+{% if can_view_students %}
+<div id="tab-students" class="tab-content hidden">
+    {% if can_write_students %}
+    <div class="mb-4 flex justify-end">
+        <button onclick="openModal('modal-add-student')"
+                class="px-4 py-2 bg-sky-600 text-white text-sm rounded hover:bg-sky-700 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Student
+        </button>
+    </div>
+    {% endif %}
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="text-left p-3 font-semibold text-slate-600">Name</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">Email</th>
+                        <th class="text-left p-3 font-semibold text-slate-600">External ID</th>
+                        {% if can_write_students %}<th class="text-center p-3 font-semibold text-slate-600">Actions</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-3 font-medium text-slate-800">{{ s.first_name }} {{ s.middle_name or "" }} {{ s.last_name }}</td>
+                        <td class="p-3 text-slate-600">{{ s.email or "—" }}</td>
+                        <td class="p-3 text-slate-500">{{ s.external_id or "—" }}</td>
+                        {% if can_write_students %}
+                        <td class="p-3 text-center whitespace-nowrap">
+                            <a href="/manage/student/edit/{{ s.id }}" class="text-sky-600 hover:underline text-xs mr-2">Edit</a>
+                            <form action="/manage/student/delete/{{ s.id }}" method="POST" class="inline" onsubmit="return confirm('Delete this student and all enrollments?')">
+                                <input type="hidden" name="session_id" value="{{ session_id }}">
+                                <button type="submit" class="text-red-500 hover:underline text-xs">Delete</button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    {% if not students %}
+                    <tr><td colspan="4" class="p-8 text-center text-slate-400">No students found.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ═══════════════════════════════════════ -->
+<!-- MODALS                                  -->
+<!-- ═══════════════════════════════════════ -->
+
+{% if can_write_instructors %}
+<div id="modal-add-instructor" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="closeModalOnBackdrop(event, 'modal-add-instructor')">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10">
+            <h3 class="font-bold text-slate-800">Add Instructor</h3>
+            <button onclick="closeModal('modal-add-instructor')" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+        </div>
+        <form action="/manage/instructor/add" method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div><label class="block text-sm font-medium text-slate-700 mb-1">First Name <span class="text-red-500">*</span></label><input type="text" name="first_name" required class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+                <div><label class="block text-sm font-medium text-slate-700 mb-1">Last Name <span class="text-red-500">*</span></label><input type="text" name="last_name" required class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Middle Name</label><input type="text" name="middle_name" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Email</label><input type="email" name="email" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">External ID</label><input type="text" name="external_id" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Department <span class="text-red-500">*</span></label>
+                <select name="department_id" required class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
+                    <option value="">— Select Department —</option>
+                    {% for dept in departments %}<option value="{{ dept.id }}">{{ dept.name }} ({{ dept.abbreviation }})</option>{% endfor %}
+                </select>
+            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Position</label>
+                <select name="position_type_id" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
+                    <option value="">— Select —</option>
+                    {% for pt in position_types %}<option value="{{ pt.id }}">{{ pt.label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeModal('modal-add-instructor')" class="px-4 py-2 border border-slate-300 rounded text-sm hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-sky-600 text-white rounded text-sm hover:bg-sky-700">Add Instructor</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if can_write_courses %}
+<div id="modal-add-course" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="closeModalOnBackdrop(event, 'modal-add-course')">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10">
+            <h3 class="font-bold text-slate-800">Add Course</h3>
+            <button onclick="closeModal('modal-add-course')" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+        </div>
+        <form action="/manage/course/add" method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Subject Area</label>
+                <select name="subject_area_id" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
+                    <option value="">— None (use first available) —</option>
+                    {% for sa in subject_areas %}<option value="{{ sa.id }}">{{ sa.abbreviation }} — {{ sa.title }}</option>{% endfor %}
+                </select>
+                <p class="text-xs text-slate-400 mt-1">Optional.</p>
+            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Course Number <span class="text-red-500">*</span></label><input type="text" name="course_number" required placeholder="e.g. 101" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Title <span class="text-red-500">*</span></label><input type="text" name="title" required placeholder="e.g. Introduction to Biology" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Expected Students</label><input type="number" name="expected_students" value="30" min="0" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeModal('modal-add-course')" class="px-4 py-2 border border-slate-300 rounded text-sm hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-sky-600 text-white rounded text-sm hover:bg-sky-700">Add Course</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if can_write_rooms %}
+<div id="modal-add-room" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="closeModalOnBackdrop(event, 'modal-add-room')">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10">
+            <h3 class="font-bold text-slate-800">Add Room</h3>
+            <button onclick="closeModal('modal-add-room')" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+        </div>
+        <form action="/manage/room/add" method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Building <span class="text-red-500">*</span></label>
+                <select name="building_id" required class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
+                    <option value="">— Select Building —</option>
+                    {% for b in buildings %}<option value="{{ b.id }}">{{ b.abbreviation }} — {{ b.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Room Number <span class="text-red-500">*</span></label><input type="text" name="room_number" required placeholder="e.g. 301" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div><label class="block text-sm font-medium text-slate-700 mb-1">Capacity <span class="text-red-500">*</span></label><input type="number" name="capacity" required value="30" min="1" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+                <div><label class="block text-sm font-medium text-slate-700 mb-1">Exam Capacity <span class="text-red-500">*</span></label><input type="number" name="exam_capacity" required value="20" min="1" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Room Type <span class="text-red-500">*</span></label>
+                <select name="room_type_id" required class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
+                    <option value="">— Select Type —</option>
+                    {% for rt in room_types %}<option value="{{ rt.id }}">{{ rt.label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeModal('modal-add-room')" class="px-4 py-2 border border-slate-300 rounded text-sm hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-sky-600 text-white rounded text-sm hover:bg-sky-700">Add Room</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if can_write_classes %}
+<div id="modal-add-class" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="closeModalOnBackdrop(event, 'modal-add-class')">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10">
+            <h3 class="font-bold text-slate-800">Add Class Section</h3>
+            <button onclick="closeModal('modal-add-class')" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+        </div>
+        <form action="/manage/class/add" method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Course <span class="text-red-500">*</span></label>
+                <select name="course_id" required class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
+                    <option value="">— Select Course —</option>
+                    {% for c in courses %}<option value="{{ c.id }}">{{ c.subject }} {{ c.course_number }} — {{ c.title }}</option>{% endfor %}
+                </select>
+            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Expected Capacity</label><input type="number" name="expected_capacity" value="30" min="1" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Instructor</label>
+                <select name="instructor_id" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
+                    <option value="">— None —</option>
+                    {% for i in instructors %}<option value="{{ i.id }}">{{ i.first_name }} {{ i.last_name }} ({{ i.dept_abbr }})</option>{% endfor %}
+                </select>
+            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Room</label>
+                <select name="room_id" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
+                    <option value="">— None —</option>
+                    {% for r in rooms %}<option value="{{ r.id }}">{{ r.building_abbr }} {{ r.room_number }} (cap: {{ r.capacity }})</option>{% endfor %}
+                </select>
+            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Time Pattern</label>
+                <select name="time_pattern_id" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
+                    <option value="">— None —</option>
+                    {% for tp in time_patterns %}<option value="{{ tp.id }}">{{ tp.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeModal('modal-add-class')" class="px-4 py-2 border border-slate-300 rounded text-sm hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-sky-600 text-white rounded text-sm hover:bg-sky-700">Add Class</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if can_write_students %}
+<div id="modal-add-student" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="closeModalOnBackdrop(event, 'modal-add-student')">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10">
+            <h3 class="font-bold text-slate-800">Add Student</h3>
+            <button onclick="closeModal('modal-add-student')" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+        </div>
+        <form action="/manage/student/add" method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div><label class="block text-sm font-medium text-slate-700 mb-1">First Name <span class="text-red-500">*</span></label><input type="text" name="first_name" required class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+                <div><label class="block text-sm font-medium text-slate-700 mb-1">Last Name <span class="text-red-500">*</span></label><input type="text" name="last_name" required class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Middle Name</label><input type="text" name="middle_name" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Email</label><input type="email" name="email" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none" placeholder="student@university.edu"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">External ID</label><input type="text" name="external_id" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"></div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeModal('modal-add-student')" class="px-4 py-2 border border-slate-300 rounded text-sm hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-sky-600 text-white rounded text-sm hover:bg-sky-700">Add Student</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- DATA BRIDGE: Jinja → JSON → Pure JavaScript    -->
+<!-- ═══════════════════════════════════════════════ -->
+<script id="chart-data" type="application/json">
+{
+    "by_role": {{ (user_stats.by_role if user_stats and user_stats.by_role else {}) | tojson }},
+    "students_by_department": {{ (user_stats.students_by_department if user_stats and user_stats.students_by_department else {}) | tojson }},
+    "students_by_year": {{ (user_stats.students_by_year if user_stats and user_stats.students_by_year else {}) | tojson }}
+}
+</script>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+/* ═══════ MODAL HELPERS ═══════ */
+function openModal(id) {
+    var modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(id) {
+    var modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+
+function closeModalOnBackdrop(event, id) {
+    if (event.target === event.currentTarget) {
+        closeModal(id);
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.fixed:not(.hidden)').forEach(function(modal) {
+            if (modal.id && modal.id.startsWith('modal-')) {
+                closeModal(modal.id);
+            }
+        });
+    }
+});
+
+/* ═══════ TAB SWITCHING ═══════ */
+function openTab(evt, tabName) {
+    var tabContents = document.getElementsByClassName('tab-content');
+    for (var i = 0; i < tabContents.length; i++) {
+        tabContents[i].classList.add('hidden');
+    }
+
+    var tabLinks = document.getElementsByClassName('tab-link');
+    for (var i = 0; i < tabLinks.length; i++) {
+        tabLinks[i].classList.remove('border-sky-500', 'text-sky-600');
+        tabLinks[i].classList.add('border-transparent', 'text-slate-500');
+    }
+
+    var tab = document.getElementById(tabName);
+    if (tab) {
+        tab.classList.remove('hidden');
+    }
+    evt.currentTarget.classList.remove('border-transparent', 'text-slate-500');
+    evt.currentTarget.classList.add('border-sky-500', 'text-sky-600');
+
+    if (history.replaceState) {
+        history.replaceState(null, null, '#' + tabName);
+    }
+}
+
+/* Restore tab from URL hash */
+document.addEventListener('DOMContentLoaded', function() {
+    var hash = window.location.hash;
+    if (hash) {
+        var tabName = hash.substring(1);
+        var tabLinks = document.getElementsByClassName('tab-link');
+        for (var i = 0; i < tabLinks.length; i++) {
+            var onclick = tabLinks[i].getAttribute('onclick') || '';
+            if (onclick.indexOf(tabName) !== -1 && document.getElementById(tabName)) {
+                tabLinks[i].click();
+                break;
+            }
+        }
+    }
+});
+
+/* ═══════ CHARTS (pure JS — no Jinja) ═══════ */
+document.addEventListener('DOMContentLoaded', function() {
+    var dataEl = document.getElementById('chart-data');
+    if (!dataEl) return;
+
+    var chartData;
+    try {
+        chartData = JSON.parse(dataEl.textContent);
+    } catch (e) {
+        console.warn('Could not parse chart data:', e);
+        return;
+    }
+
+    var roleColors = ['#0284c7','#2563eb','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#ec4899'];
+
+    /* --- Users by Role (Doughnut) --- */
+    var byRole = chartData.by_role || {};
+    var roleLabels = Object.keys(byRole);
+    var roleValues = Object.values(byRole);
+    var ctx1 = document.getElementById('chartUsersByRole');
+
+    if (ctx1 && roleLabels.length > 0) {
+        new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: roleLabels.map(function(l) {
+                    return l.charAt(0).toUpperCase() + l.slice(1);
+                }),
+                datasets: [{
+                    data: roleValues,
+                    backgroundColor: roleColors.slice(0, roleLabels.length),
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 11 }, padding: 12 }
+                    }
+                }
+            }
+        });
+    }
+
+    /* --- Students by Department (Bar) --- */
+    var byDept = chartData.students_by_department || {};
+    var deptLabels = Object.keys(byDept);
+    var deptValues = Object.values(byDept);
+    var ctx2 = document.getElementById('chartStudentsByDept');
+
+    if (ctx2 && deptLabels.length > 0) {
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: deptLabels,
+                datasets: [{
+                    label: 'Students',
+                    data: deptValues,
+                    backgroundColor: '#0284c7',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                    x: { ticks: { font: { size: 10 } } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    /* --- Students by Year (Bar) --- */
+    var byYear = chartData.students_by_year || {};
+    var yearLabels = Object.keys(byYear);
+    var yearValues = Object.values(byYear);
+    var ctx3 = document.getElementById('chartStudentsByYear');
+
+    if (ctx3 && yearLabels.length > 0) {
+        new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: yearLabels,
+                datasets: [{
+                    label: 'Students',
+                    data: yearValues,
+                    backgroundColor: roleColors.slice(0, yearLabels.length),
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                    x: { ticks: { font: { size: 10 } } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}{% extends "base.html" %}
+
+{% block head_extra %}
+<style>
+    .page-header{background:#fff;border-bottom:1px solid #e2e8f0;padding:30px 18px 22px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.04);border-radius:16px;}
+    .page-title{margin:0;font-size:32px;font-weight:800;color:#1a4d7a;}
+    .custom-tabs{display:flex;justify-content:center;gap:10px;border-bottom:2px solid #e2e8f0;margin:0 auto 18px;padding-bottom:10px;}
+    .custom-tabs .nav-link{border:1px solid #e2e8f0;background:#fff;color:#1a4d7a;font-size:16px;font-weight:800;padding:10px 16px;border-radius:12px;}
+    .custom-tabs .nav-link.active{background:#1a4d7a;border-color:#1a4d7a;color:#fff;box-shadow:0 10px 22px rgba(26,77,122,0.22);}
+    .card-box{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px;box-shadow:0 10px 22px rgba(0,0,0,0.06);}
+    .badge-available{display:inline-block;min-width:110px;font-size:14px;font-weight:800;padding:8px 14px;border-radius:10px;cursor:pointer;background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;}
+    .badge-unavailable{display:inline-block;min-width:110px;font-size:14px;font-weight:800;padding:8px 14px;border-radius:10px;cursor:pointer;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
+    .save-btn{background:#1a4d7a;border:none;color:#fff;font-size:16px;font-weight:800;padding:10px 18px;border-radius:12px;}
+    .save-btn:hover{background:#153c60;color:#fff;}
+    .save-message{display:none;margin-top:14px;padding:12px;background:#d1fae5;color:#065f46;font-weight:800;text-align:center;border-radius:12px;}
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo"><img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo"></div>
+            <div class="ms-3"><span class="navbar-brand-text mb-0">{{ user.name }}</span></div>
+        </div>
+        <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Stats from Supabase profile + UniTime -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Courses Teaching</div>
+                <div class="stat-value">{{ classes | length }}</div>
+                <div class="stat-subtext">This Semester</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Total Students</div>
+                <div class="stat-value">{{ students | length }}</div>
+                <div class="stat-subtext">Enrolled</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Position</div>
+                <div class="stat-value" style="font-size:16px;">{{ profile.position or role_title }}</div>
+                <div class="stat-subtext">{{ profile.employee_id or 'N/A' }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Employee ID</div>
+                <div class="stat-value" style="font-size:16px;">{{ profile.employee_id or 'N/A' }}</div>
+                <div class="stat-subtext">{{ user.email }}</div>
+            </div>
+        </div>
+    </div>
+
+    <header class="page-header mb-4"><h1 class="page-title">Teaching Dashboard</h1></header>
+
+    <ul class="nav custom-tabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#teaching" type="button">My Teaching Schedule</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#my-students" type="button">My Students</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#availability" type="button">Set Availability</button></li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <div class="tab-pane fade show active" id="teaching">
+            <div class="card-box">
+                {% if classes | length > 0 %}
+                <div class="table-responsive">
+                    <table class="table-academic mb-0">
+                        <thead><tr><th>Course</th><th>Section</th><th>Time</th><th>Room</th><th>Capacity</th></tr></thead>
+                        <tbody>
+                            {% for c in classes %}
+                            <tr>
+                                <td><strong>{{ c.subject }} {{ c.course_number }}</strong><br><small>{{ c.course_title }}</small></td>
+                                <td>{{ c.class_suffix or "—" }}</td>
+                                <td>{{ c.time_pattern_name or "TBA" }}</td>
+                                <td>{% if c.assigned_building %}{{ c.assigned_building }} {{ c.assigned_room_number }}{% else %}TBA{% endif %}</td>
+                                <td>{{ c.expected_capacity or "—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5"><h5 class="text-secondary-academic">No Classes Assigned</h5></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="my-students">
+            <div class="card-box">
+                {% if students | length > 0 %}
+                <div class="table-responsive">
+                    <table class="table-academic mb-0">
+                        <thead><tr><th>Student</th><th>Email</th><th>Course</th></tr></thead>
+                        <tbody>
+                            {% for s in students %}
+                            <tr>
+                                <td><strong>{{ s.first_name }} {{ s.last_name }}</strong></td>
+                                <td>{{ s.email or "—" }}</td>
+                                <td>{{ s.subject }} {{ s.course_number }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5"><h5 class="text-secondary-academic">No Students Found</h5></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="availability">
+            <div class="card-box">
+                <h5 class="text-center text-primary-academic fw-bold mb-3">Set Availability</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-academic">
+                        <thead><tr><th style="min-width:140px;">Time</th><th>Sat</th><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>9:00 - 10:30</strong></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td></tr>
+                            <tr><td><strong>11:00 - 12:30</strong></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td></tr>
+                            <tr><td><strong>1:00 - 2:30</strong></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td><td class="toggle"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn save-btn mt-3" onclick="saveAvailability()">Save Availability</button>
+                <div id="saveMessage" class="save-message">Availability Saved Successfully ✔</div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="footer-academic mt-5"><p>AI Timetable System © 2026</p></footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const cells=document.querySelectorAll(".toggle");
+cells.forEach((c,i)=>{const s=localStorage.getItem("cell"+i);c.innerHTML=(s==="available")?'<span class="badge-available">Available</span>':'<span class="badge-unavailable">Unavailable</span>';c.addEventListener("click",()=>{const b=c.querySelector("span");if(b.classList.contains("badge-available")){b.classList.remove("badge-available");b.classList.add("badge-unavailable");b.textContent="Unavailable";}else{b.classList.remove("badge-unavailable");b.classList.add("badge-available");b.textContent="Available";}});});
+function saveAvailability(){document.querySelectorAll(".toggle").forEach((c,i)=>{localStorage.setItem("cell"+i,c.querySelector("span").classList.contains("badge-available")?"available":"unavailable");});const m=document.getElementById("saveMessage");m.style.display="block";setTimeout(()=>{m.style.display="none";},3000);}
+</script>
+{% endblock %}{% extends "base.html" %}
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo"><img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo"></div>
+            <div class="ms-3"><span class="navbar-brand-text mb-0">{{ user.name }}</span></div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Profile Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-academic">
+                <div class="text-center">
+                    <h2 class="h3 mb-2 text-primary-academic fw-bold">Schedule</h2>
+                    <p class="text-secondary-academic mb-0">
+                        {{ profile.department or 'Student' }}
+                        {% if profile.academic_year %} — Year {{ profile.academic_year }}{% endif %}
+                        {% if profile.student_id %} | ID: {{ profile.student_id }}{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats from Supabase profile -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Student ID</div>
+                <div class="stat-value" style="font-size:18px;">{{ profile.student_id or 'N/A' }}</div>
+                <div class="stat-subtext">University ID</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Department</div>
+                <div class="stat-value" style="font-size:16px;">{{ profile.department or 'Undeclared' }}</div>
+                <div class="stat-subtext">Major</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Academic Year</div>
+                <div class="stat-value">{{ profile.academic_year or '—' }}</div>
+                <div class="stat-subtext">Current Year</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Enrolled Courses</div>
+                <div class="stat-value">{{ schedule | length }}</div>
+                <div class="stat-subtext">This Term</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timetable -->
+    <div class="card-academic mb-4">
+        <div style="background:#1f4f78;color:white;padding:20px 30px;font-size:22px;font-weight:800;border-radius:14px 14px 0 0;">Weekly Timetable</div>
+        {% if schedule and schedule | length > 0 %}
+        <div class="table-responsive">
+            <table class="table-academic mb-0">
+                <thead><tr><th>Course</th><th>Time</th><th>Room</th><th>Instructor(s)</th></tr></thead>
+                <tbody>
+                    {% for item in schedule %}
+                    <tr>
+                        <td><strong>{{ item.subject }} {{ item.course_number }}</strong><br><small class="text-secondary-academic">{{ item.course_title }}</small></td>
+                        <td>{{ item.time_pattern or "TBA" }}{% if item.date_pattern %}<br><small>{{ item.date_pattern }}</small>{% endif %}</td>
+                        <td>{% if item.building and item.room_number %}{{ item.building }} {{ item.room_number }}{% else %}TBA{% endif %}</td>
+                        <td>{{ item.instructors or "TBA" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <h5 class="text-secondary-academic">No Classes Found</h5>
+            <p class="text-secondary-academic">You are not enrolled in any classes for this term.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if schedule and schedule | length > 0 %}
+    <div class="card-academic">
+        <div class="card-header-academic">Course Instructors</div>
+        <div class="table-responsive">
+            <table class="table-academic mb-0">
+                <thead><tr><th>Course</th><th>Instructor</th><th>Room</th></tr></thead>
+                <tbody>
+                    {% for item in schedule %}
+                    <tr>
+                        <td><strong>{{ item.subject }} {{ item.course_number }}</strong></td>
+                        <td>{{ item.instructors or "TBA" }}</td>
+                        <td>{% if item.building %}{{ item.building }} {{ item.room_number }}{% else %}TBA{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<footer class="footer-academic mt-5"><p>AI Timetable System © 2026 | Powered by <span class="footer-academic-logo">UniTime</span></p></footer>
+{% endblock %}{% extends "base.html" %}
+{% block body_class %}{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card animate-fade-in">
+        <div class="auth-header">
+            <div class="university-logo-container auth-logo mx-auto mb-4">
+                <img src="{{ url_for('static', path='/img/logo.png') }}" alt="University Logo">
+            </div>
+            <h1 class="auth-title">Welcome Back</h1>
+            <p class="auth-subtitle">Sign in to access your dashboard</p>
+        </div>
+
+        <div class="auth-body">
+            <div class="role-badge-container">
+                <div class="role-badge-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        {% if role_id == 'student' %}
+                        <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
+                        {% elif role_id in ('ta', 'lecturer') %}
+                        <path d="M12,15C7.58,15 4,16.79 4,19V21H20V19C20,16.79 16.42,15 12,15M8,9A4,4 0 0,0 12,13A4,4 0 0,0 16,9M11.5,2C11.2,2 11,2.21 11,2.5V5.5H10V3C10,3 7.75,3.86 7.75,6.75C7.75,6.75 7,6.89 7,8H17C16.95,6.89 16.25,6.75 16.25,6.75C16.25,3.86 14,3 14,3V5.5H13V2.5C13,2.21 12.81,2 12.5,2H11.5Z"/>
+                        {% elif role_id == 'scheduler' %}
+                        <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/>
+                        {% else %}
+                        <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,5A3,3 0 0,1 15,8A3,3 0 0,1 12,11A3,3 0 0,1 9,8A3,3 0 0,1 12,5M17.13,17C15.92,18.85 14.11,20.24 12,20.92C9.89,20.24 8.08,18.85 6.87,17C6.53,16.5 6.24,16 6,15.47C6,13.82 8.71,12.47 12,12.47C15.29,12.47 18,13.79 18,15.47C17.76,16 17.47,16.5 17.13,17Z"/>
+                        {% endif %}
+                    </svg>
+                </div>
+                <div class="role-badge-text-container">
+                    <span class="role-badge-label">Signing in as</span>
+                    <span class="role-badge-value">{{ role_title }}</span>
+                </div>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-danger" role="alert" style="border-radius: 12px;">
+                <svg class="me-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ error }}
+            </div>
+            {% endif %}
+
+            {% if success %}
+            <div class="alert alert-success" role="alert" style="border-radius: 12px;">
+                <svg class="me-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ success }}
+            </div>
+            {% endif %}
+
+            <form action="/login/{{ role_id }}" method="POST">
+                <div class="mb-4">
+                    <label for="email" class="form-label-academic">Email Address</label>
+                    <div class="input-group-academic">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
+                        </svg>
+                        <input type="email" name="email" id="email" class="form-control-academic" placeholder="you@university.edu" required>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="form-label-academic">Password</label>
+                    <div class="input-group-academic">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <input type="password" name="password" id="password" class="form-control-academic" placeholder="Enter your password" required minlength="6">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary-academic w-100 mb-3">
+                    <svg class="me-2" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                    </svg>
+                    Sign In to Dashboard
+                </button>
+            </form>
+
+            <div class="text-center">
+                <p class="mb-2"><small class="text-secondary-academic">Don't have an account? <a href="/signup/{{ role_id }}" class="text-primary-academic fw-bold">Create Account</a></small></p>
+                <p class="mb-0"><a href="/" class="text-secondary-academic" style="font-size: 0.875rem;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Change Role</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}{% extends "base.html" %}
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo"><img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo"></div>
+            <div class="ms-3"><span class="navbar-brand-text mb-0">{{ role_title }}</span></div>
+        </div>
+        <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:600px;">
+    <a href="/dashboard/{{ user.role_id }}" class="text-primary-academic fw-bold mb-3 d-inline-block">← Back to Dashboard</a>
+    <h2 class="text-primary-academic fw-bold mb-4">Edit Course</h2>
+    <div class="card-academic">
+        <form action="/manage/course/edit/{{ course.id }}" method="POST">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <div class="row g-3">
+                <div class="col-12"><label class="form-label-academic">Subject</label><input type="text" value="{{ course.subject }}" disabled class="form-control-academic" style="background:#f8f9fa;"></div>
+                <div class="col-md-6"><label class="form-label-academic">Course Number *</label><input type="text" name="course_number" required value="{{ course.course_number }}" class="form-control-academic"></div>
+                <div class="col-md-6"><label class="form-label-academic">Expected Students</label><input type="number" name="expected_students" value="{{ course.expected_students or 0 }}" min="0" class="form-control-academic"></div>
+                <div class="col-12"><label class="form-label-academic">Title *</label><input type="text" name="title" required value="{{ course.title or '' }}" class="form-control-academic"></div>
+                <div class="col-12 text-end mt-3">
+                    <a href="/dashboard/{{ user.role_id }}" class="btn btn-secondary-academic me-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary-academic">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}{% extends "base.html" %}
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo">
+                <img src="{{ url_for('static', path='/img/logo.png') }}" alt="University Logo">
+            </div>
+            <div class="ms-3"><span class="navbar-brand-text mb-0">{{ role_title }}</span></div>
+        </div>
+        <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:600px;">
+    <a href="/dashboard/{{ user.role_id }}" class="text-primary-academic fw-bold mb-3 d-inline-block">← Back to Dashboard</a>
+    <h2 class="text-primary-academic fw-bold mb-4">Edit Instructor</h2>
+    <div class="card-academic">
+        <form action="/manage/instructor/edit/{{ instructor.id }}" method="POST">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label-academic">First Name *</label><input type="text" name="first_name" required value="{{ instructor.first_name }}" class="form-control-academic"></div>
+                <div class="col-md-6"><label class="form-label-academic">Last Name *</label><input type="text" name="last_name" required value="{{ instructor.last_name }}" class="form-control-academic"></div>
+                <div class="col-12"><label class="form-label-academic">Middle Name</label><input type="text" name="middle_name" value="{{ instructor.middle_name or '' }}" class="form-control-academic"></div>
+                <div class="col-md-6"><label class="form-label-academic">Email</label><input type="email" name="email" value="{{ instructor.email or '' }}" class="form-control-academic"></div>
+                <div class="col-md-6"><label class="form-label-academic">External ID</label><input type="text" name="external_id" value="{{ instructor.external_id or '' }}" class="form-control-academic"></div>
+                <div class="col-md-6">
+                    <label class="form-label-academic">Department *</label>
+                    <select name="department_id" required class="form-control-academic">
+                        {% for dept in departments %}<option value="{{ dept.id }}" {% if dept.id == instructor.department_id %}selected{% endif %}>{{ dept.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-academic">Position</label>
+                    <select name="position_type_id" class="form-control-academic">
+                        <option value="">— Select —</option>
+                        {% for pt in position_types %}<option value="{{ pt.id }}" {% if pt.id == instructor.position_type_id %}selected{% endif %}>{{ pt.label }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 text-end mt-3">
+                    <a href="/dashboard/{{ user.role_id }}" class="btn btn-secondary-academic me-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary-academic">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}{% extends "base.html" %}
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo"><img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo"></div>
+            <div class="ms-3"><span class="navbar-brand-text mb-0">{{ role_title }}</span></div>
+        </div>
+        <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:600px;">
+    <a href="/dashboard/{{ user.role_id }}" class="text-primary-academic fw-bold mb-3 d-inline-block">← Back to Dashboard</a>
+    <h2 class="text-primary-academic fw-bold mb-4">Edit Room</h2>
+    <p class="text-secondary-academic">{{ room.building_abbr }} {{ room.room_number }} — {{ room.building_name }}</p>
+    <div class="card-academic">
+        <form action="/manage/room/edit/{{ room.id }}" method="POST">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <div class="row g-3">
+                <div class="col-12"><label class="form-label-academic">Room</label><input type="text" value="{{ room.building_abbr }} {{ room.room_number }}" disabled class="form-control-academic" style="background:#f8f9fa;"></div>
+                <div class="col-md-6"><label class="form-label-academic">Capacity *</label><input type="number" name="capacity" required value="{{ room.capacity }}" min="1" class="form-control-academic"></div>
+                <div class="col-md-6"><label class="form-label-academic">Exam Capacity *</label><input type="number" name="exam_capacity" required value="{{ room.exam_capacity }}" min="1" class="form-control-academic"></div>
+                <div class="col-12 text-end mt-3">
+                    <a href="/dashboard/{{ user.role_id }}" class="btn btn-secondary-academic me-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary-academic">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}{% extends "base.html" %}
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo"><img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo"></div>
+            <div class="ms-3"><span class="navbar-brand-text mb-0">{{ role_title }}</span></div>
+        </div>
+        <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:600px;">
+    <a href="/dashboard/{{ user.role_id }}" class="text-primary-academic fw-bold mb-3 d-inline-block">← Back to Dashboard</a>
+    <h2 class="text-primary-academic fw-bold mb-4">Edit Student</h2>
+    <div class="card-academic">
+        <form action="/manage/student/edit/{{ student.id }}" method="POST">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label-academic">First Name *</label><input type="text" name="first_name" required value="{{ student.first_name }}" class="form-control-academic"></div>
+                <div class="col-md-6"><label class="form-label-academic">Last Name *</label><input type="text" name="last_name" required value="{{ student.last_name }}" class="form-control-academic"></div>
+                <div class="col-12"><label class="form-label-academic">Middle Name</label><input type="text" name="middle_name" value="{{ student.middle_name or '' }}" class="form-control-academic"></div>
+                <div class="col-md-6"><label class="form-label-academic">Email</label><input type="email" name="email" value="{{ student.email or '' }}" class="form-control-academic"></div>
+                <div class="col-md-6"><label class="form-label-academic">External ID</label><input type="text" name="external_id" value="{{ student.external_id or '' }}" class="form-control-academic"></div>
+                <div class="col-12 text-end mt-3">
+                    <a href="/dashboard/{{ user.role_id }}" class="btn btn-secondary-academic me-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary-academic">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}{% extends "base.html" %}
+{% block body_class %}{% endblock %}
+
+{% block content %}
+<div class="role-selection-wrapper">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="university-logo-container mx-auto">
+                <img src="{{ url_for('static', path='/img/logo.png') }}" alt="University Logo">
+            </div>
+        </div>
+
+        <div class="role-selection-header">
+            <h1 class="role-selection-title">Artificial Intelligence (AI) Timetable System</h1>
+            <div class="decorative-line"></div>
+            <p class="role-selection-subtitle">Select your role to sign in or create an account</p>
+        </div>
+
+        <div class="row g-4 mb-5">
+            {% for role in roles %}
+            <div class="col-md-6 col-lg-3">
+                <div class="role-card" onclick="window.location.href='{{ role.login_url }}'">
+                    <div class="role-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="{{ role.icon_svg }}"/>
+                        </svg>
+                    </div>
+                    <h3 class="role-title">{{ role.title }}</h3>
+                    <p class="role-description">{{ role.description | default('') }}</p>
+                    <a href="{{ role.login_url }}" class="role-action">
+                        Continue
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="card-academic animate-fade-in">
+            <div class="row g-4">
+                <div class="col-md-4 text-center">
+                    <div class="mb-3">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,5A3,3 0 0,1 15,8A3,3 0 0,1 12,11A3,3 0 0,1 9,8A3,3 0 0,1 12,5M17.13,17C15.92,18.85 14.11,20.24 12,20.92C9.89,20.24 8.08,18.85 6.87,17C6.53,16.5 6.24,16 6,15.47C6,13.82 8.71,12.47 12,12.47C15.29,12.47 18,13.79 18,15.47C17.76,16 17.47,16.5 17.13,17Z" fill="var(--primary-blue)"/>
+                        </svg>
+                    </div>
+                    <h4 class="h5 text-primary-academic fw-bold">Secure & Protected</h4>
+                    <p class="text-secondary-academic">Advanced security system for your academic data</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="mb-3">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" fill="var(--primary-blue)"/>
+                        </svg>
+                    </div>
+                    <h4 class="h5 text-primary-academic fw-bold">Available 24/7</h4>
+                    <p class="text-secondary-academic">Access your schedule anytime, anywhere</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="mb-3">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10,21V19H6.41L10.91,14.5L9.5,13.09L5,17.59V14H3V21H10M14.5,10.91L19,6.41V10H21V3H14V5H17.59L13.09,9.5L14.5,10.91Z" fill="var(--primary-blue)"/>
+                        </svg>
+                    </div>
+                    <h4 class="h5 text-primary-academic fw-bold">Easy to Use</h4>
+                    <p class="text-secondary-academic">Simple and intuitive interface</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-academic mt-4 text-center">
+            <p class="mb-0 text-secondary-academic">
+                Powered by <span class="footer-academic-logo">UniTime & Supabase</span>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}{% extends "base.html" %}
+{% block body_class %}{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="{% if role_id in ('student', 'ta', 'lecturer') %}col-lg-10{% else %}col-lg-6{% endif %}">
+                <div class="auth-card animate-fade-in" style="max-width:100%;">
+                    <div class="auth-header">
+                        <div class="university-logo-container auth-logo mx-auto mb-4">
+                            <img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo">
+                        </div>
+                        <h1 class="auth-title">Create Account</h1>
+                        <p class="auth-subtitle">Register as {{ role_title }}</p>
+                    </div>
+
+                    <div class="auth-body">
+                        <div class="row g-4">
+                            <div class="{% if role_id in ('student', 'ta', 'lecturer') %}col-lg-7{% else %}col-12{% endif %}">
+
+                                <div class="role-badge-container">
+                                    <div class="role-badge-icon">
+                                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            {% if role_id == 'student' %}
+                                            <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
+                                            {% elif role_id in ('ta', 'lecturer') %}
+                                            <path d="M12,15C7.58,15 4,16.79 4,19V21H20V19C20,16.79 16.42,15 12,15M8,9A4,4 0 0,0 12,13A4,4 0 0,0 16,9"/>
+                                            {% elif role_id == 'scheduler' %}
+                                            <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/>
+                                            {% else %}
+                                            <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z"/>
+                                            {% endif %}
+                                        </svg>
+                                    </div>
+                                    <div class="role-badge-text-container">
+                                        <span class="role-badge-label">Registering as</span>
+                                        <span class="role-badge-value">{{ role_title }}</span>
+                                    </div>
+                                </div>
+
+                                {% if error %}
+                                <div class="alert alert-danger" style="border-radius:12px;">{{ error }}</div>
+                                {% endif %}
+
+                                <form action="/signup/{{ role_id }}" method="POST">
+
+                                    <!-- ═══ STUDENT FIELDS ═══ -->
+                                    {% if role_id == 'student' %}
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">First Name *</label>
+                                            <input type="text" name="first_name" class="form-control-academic" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">Last Name *</label>
+                                            <input type="text" name="last_name" class="form-control-academic" required>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Student ID *</label>
+                                        <input type="text" name="student_id" class="form-control-academic" placeholder="e.g. 20240001" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">University Email *</label>
+                                        <input type="email" name="email" class="form-control-academic" placeholder="you@university.edu" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Department / Major *</label>
+                                        <select name="department" class="form-control-academic" required>
+                                            <option value="">Select your department...</option>
+                                            <option value="Data Science">Data Science</option>
+                                            <option value="Intelligent Systems">Intelligent Systems</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Academic Year *</label>
+                                        <select name="academic_year" class="form-control-academic" required>
+                                            <option value="">Select your year...</option>
+                                            <option value="1">Year 1 (Term 1 & 2)</option>
+                                            <option value="2">Year 2 (Term 3 & 4)</option>
+                                            <option value="3">Year 3 (Term 5 & 6)</option>
+                                            <option value="4">Year 4 (Term 7 & 8)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- ═══ STAFF FIELDS (TA / Lecturer) ═══ -->
+                                    {% elif role_id in ('ta', 'lecturer') %}
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">First Name *</label>
+                                            <input type="text" name="first_name" class="form-control-academic" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">Last Name *</label>
+                                            <input type="text" name="last_name" class="form-control-academic" required>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Employee ID *</label>
+                                        <input type="text" name="employee_id" class="form-control-academic" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">University Email *</label>
+                                        <input type="email" name="email" class="form-control-academic" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Position *</label>
+                                        <select name="position" class="form-control-academic" required>
+                                            <option value="">Select position...</option>
+                                            <option>Professor</option>
+                                            <option>Associate Professor</option>
+                                            <option>Assistant Professor</option>
+                                            <option>Lecturer</option>
+                                            <option>Teaching Assistant</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- ═══ SCHEDULER FIELDS ═══ -->
+                                    {% elif role_id == 'scheduler' %}
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Full Name *</label>
+                                        <input type="text" name="full_name" class="form-control-academic" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Employee ID *</label>
+                                        <input type="text" name="employee_id" class="form-control-academic" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Email *</label>
+                                        <input type="email" name="email" class="form-control-academic" required>
+                                    </div>
+
+                                    <!-- ═══ ADMIN FIELDS (vicedean / dean) ═══ -->
+                                    {% else %}
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Full Name *</label>
+                                        <input type="text" name="full_name" class="form-control-academic" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Academic Position *</label>
+                                        <select name="academic_position" class="form-control-academic" required>
+                                            <option value="">Select Position...</option>
+                                            <option>Dean</option>
+                                            <option>Vice Dean</option>
+                                            <option>Academy Director</option>
+                                            <option>Head of Department</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Official University Email *</label>
+                                        <input type="email" name="email" class="form-control-academic" required>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- ═══ PASSWORD (all roles) ═══ -->
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">Password *</label>
+                                            <input type="password" name="password" class="form-control-academic" placeholder="Minimum 6 characters" required minlength="6">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">Confirm Password *</label>
+                                            <input type="password" name="confirm_password" class="form-control-academic" placeholder="Re-enter password" required minlength="6">
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary-academic w-100 mb-3">
+                                        <svg class="me-2" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                                        </svg>
+                                        Create Account
+                                    </button>
+                                </form>
+
+                                <div class="text-center">
+                                    <p class="mb-2"><small>Already have an account? <a href="/login/{{ role_id }}" class="text-primary-academic fw-bold">Sign In</a></small></p>
+                                    <p class="mb-0"><a href="/" class="text-secondary-academic" style="font-size:.875rem;">← Change Role</a></p>
+                                </div>
+                            </div>
+
+                            <!-- ═══ RIGHT SIDEBAR (student/staff only) ═══ -->
+                            {% if role_id in ('student', 'ta', 'lecturer') %}
+                            <div class="col-lg-5">
+                                <div class="card-academic h-100 bg-lighter-blue">
+                                    <h5 class="text-primary-academic fw-bold mb-3">
+                                        {% if role_id == 'student' %}Student Benefits{% else %}Staff Features{% endif %}
+                                    </h5>
+                                    <ul class="list-unstyled">
+                                        {% if role_id == 'student' %}
+                                        <li class="mb-3"><strong>Real-time Schedule Access</strong><br><small class="text-secondary-academic">View your timetable anytime</small></li>
+                                        <li class="mb-3"><strong>Course Information</strong><br><small class="text-secondary-academic">Instructors, rooms, and timing</small></li>
+                                        <li class="mb-3"><strong>Export & Print</strong><br><small class="text-secondary-academic">Download your schedule</small></li>
+                                        <li class="mb-3"><strong>Instant Updates</strong><br><small class="text-secondary-academic">Schedule change notifications</small></li>
+                                        {% else %}
+                                        <li class="mb-3"><strong>Teaching Schedule</strong><br><small class="text-secondary-academic">View and organize your classes</small></li>
+                                        <li class="mb-3"><strong>Set Availability</strong><br><small class="text-secondary-academic">Define available time slots</small></li>
+                                        <li class="mb-3"><strong>Student Rosters</strong><br><small class="text-secondary-academic">Access enrolled student lists</small></li>
+                                        <li class="mb-3"><strong>Course Management</strong><br><small class="text-secondary-academic">View course details</small></li>
+                                        {% endif %}
+                                    </ul>
+                                    <div class="alert-academic alert-info mt-4">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <div><strong>Need Help?</strong><br>Contact support@university.edu</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UniTime Integration Test</title>
+
+  <style>
+    :root{
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: rgba(15, 23, 42, .08);
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --shadow2: 0 6px 18px rgba(2, 6, 23, .08);
+
+      --brand: #1a4d7a;
+      --brand2: #103554;
+
+      --green: #27ae60;
+      --blue: #2980b9;
+      --gray: #7f8c8d;
+      --red: #e74c3c;
+      --amber: #f39c12;
+
+      --radius: 16px;
+      --radius2: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(26,77,122,.14), transparent 60%),
+                  radial-gradient(900px 500px at 100% 0%, rgba(41,128,185,.10), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      padding: 22px;
+    }
+
+    .container{
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .title-wrap{
+      display:flex;
+      align-items:flex-start;
+      gap: 12px;
+    }
+
+    .mark{
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(26,77,122,.12);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex: 0 0 auto;
+      box-shadow: 0 10px 22px rgba(26,77,122,.10);
+      border: 1px solid rgba(26,77,122,.15);
+    }
+
+    h1{
+      font-size: 22px;
+      line-height: 1.2;
+      margin-top: 2px;
+      color: #0b1b2b;
+      letter-spacing: .2px;
+    }
+
+    .subtitle{
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: 13px;
+      max-width: 720px;
+    }
+
+    .back-btn{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(26,77,122,.22);
+      background: #fff;
+      color: var(--brand);
+      text-decoration:none;
+      font-weight: 700;
+      font-size: 13px;
+      box-shadow: 0 10px 24px rgba(26,77,122,.08);
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+      white-space: nowrap;
+    }
+
+    .back-btn:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(26,77,122,.12);
+      background: rgba(26,77,122,.03);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .card-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .card h2{
+      font-size: 15px;
+      color: #0b1b2b;
+      letter-spacing: .2px;
+    }
+
+    .desc{
+      color: var(--muted);
+      font-size: 12.5px;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    code{
+      background: rgba(2,6,23,.06);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 12px;
+      border: 1px solid rgba(2,6,23,.08);
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .btn{
+      padding: 10px 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      box-shadow: var(--shadow2);
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 12px 24px rgba(2,6,23,.10); }
+    .btn:active{ transform: translateY(0px) scale(.99); opacity: .95; }
+
+    .btn-green{ background: linear-gradient(180deg, #2ecc71, var(--green)); }
+    .btn-blue{  background: linear-gradient(180deg, #3498db, var(--blue));  }
+    .btn-gray{  background: linear-gradient(180deg, #95a5a6, var(--gray));  }
+
+    select{
+      padding: 10px 12px;
+      border: 1px solid rgba(2,6,23,.14);
+      border-radius: 12px;
+      font-size: 13px;
+      margin-top: 8px;
+      background: #fff;
+      color: #0b1b2b;
+      outline: none;
+      box-shadow: 0 10px 22px rgba(2,6,23,.06);
+      transition: box-shadow .15s ease, border-color .15s ease;
+      width: min(520px, 100%);
+    }
+    select:focus{
+      border-color: rgba(26,77,122,.40);
+      box-shadow: 0 0 0 4px rgba(26,77,122,.12), 0 12px 24px rgba(2,6,23,.08);
+    }
+
+    .result{
+      margin-top: 14px;
+      padding: 14px;
+      background: #fbfcfe;
+      border-radius: 14px;
+      border: 1px solid rgba(2,6,23,.08);
+      border-left: 6px solid rgba(100,116,139,.45);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 520px;
+      overflow-y: auto;
+      display: none;
+      box-shadow: 0 10px 22px rgba(2,6,23,.06);
+    }
+    .result.visible{ display:block; }
+    .result.ok{   border-left-color: rgba(39,174,96,.95); }
+    .result.err{  border-left-color: rgba(231,76,60,.95); }
+    .result.load{ border-left-color: rgba(243,156,18,.95); }
+
+    table.data{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 12px;
+      font-size: 13px;
+      overflow: hidden;
+      border: 1px solid rgba(2,6,23,.10);
+      border-radius: 14px;
+      box-shadow: 0 10px 22px rgba(2,6,23,.06);
+    }
+    table.data th{
+      background: linear-gradient(180deg, var(--brand), var(--brand2));
+      color: white;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 12.5px;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    table.data td{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(2,6,23,.08);
+      background: #fff;
+      vertical-align: top;
+    }
+    table.data tr:last-child td{ border-bottom: none; }
+    table.data tr:hover td{ background: rgba(26,77,122,.04); }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      background: rgba(41,128,185,.10);
+      color: #1a6fa8;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      margin: 2px 4px 0 0;
+      border: 1px solid rgba(41,128,185,.20);
+      white-space: nowrap;
+    }
+
+    .meta-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(2,6,23,.14);
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(2,6,23,.10);
+      background: rgba(255,255,255,.9);
+      color: #0b1b2b;
+      font-size: 12px;
+      box-shadow: 0 10px 22px rgba(2,6,23,.05);
+      user-select:none;
+    }
+
+    .dot{
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(100,116,139,.6);
+      border: 1px solid rgba(2,6,23,.18);
+    }
+    .dot.ok{ background: rgba(39,174,96,.85); }
+    .dot.err{ background: rgba(231,76,60,.85); }
+    .dot.load{ background: rgba(243,156,18,.85); }
+
+    .footer{
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align:center;
+    }
+
+    @media (min-width: 900px){
+      .grid{
+        grid-template-columns: 1fr 1fr;
+      }
+      .card.full{
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="title-wrap">
+        <div class="mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a4d7a">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3M5 11h14M6 21h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h1>UniTime Integration Test</h1>
+          <p class="subtitle">Verify data flows between FastAPI and UniTime. Three working endpoints confirmed.</p>
+        </div>
+      </div>
+
+      <a class="back-btn" href="/dashboard/scheduler" title="Back to Scheduler Dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 18l-6-6 6-6"/>
+        </svg>
+        Back to Dashboard
+      </a>
+    </div>
+
+    <div class="grid">
+
+      <!-- ══════════════ HEALTH CHECK ══════════════ -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>1. Connection Health Check</h2>
+            <p class="desc">Calls <code>GET /api/unitime/health</code> — authenticates and fetches session list from UniTime.</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-green" onclick="testHealth()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20 6L9 17l-5-5"/>
+            </svg>
+            Test Connection
+          </button>
+
+          <span class="pill" id="pill-health">
+            <span class="dot" id="dot-health"></span>
+            Health: idle
+          </span>
+        </div>
+
+        <div class="result" id="r-health"></div>
+      </div>
+
+      <!-- ══════════════ SESSIONS ══════════════ -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>2. Academic Sessions (IN: UniTime → App)</h2>
+            <p class="desc">Calls <code>GET /api/unitime/sessions</code> — fetches all configured terms.</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-blue" onclick="testSessions()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+            </svg>
+            Get Sessions
+          </button>
+
+          <span class="pill" id="pill-sessions">
+            <span class="dot" id="dot-sessions"></span>
+            Sessions: idle
+          </span>
+        </div>
+
+        <div class="result" id="r-sessions"></div>
+      </div>
+
+      <!-- ══════════════ ROOMS ══════════════ -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>3. Rooms (IN: UniTime → App)</h2>
+            <p class="desc">Calls <code>GET /api/unitime/rooms?term=...</code> — fetches room data.</p>
+          </div>
+        </div>
+
+        <select id="sel-rooms">
+          <option value="Fal2010woebegon">Fal 2010 woebegon (has data)</option>
+          <option value="Fall2025Main">Fall 2025 Main (empty)</option>
+        </select>
+
+        <div class="actions">
+          <button class="btn btn-blue" onclick="testRooms(false)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 3h18v18H3V3zm6 0v18M3 9h18"/>
+            </svg>
+            Get Rooms (Table)
+          </button>
+
+          <button class="btn btn-gray" onclick="testRooms(true)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            Raw JSON
+          </button>
+
+          <span class="pill" id="pill-rooms">
+            <span class="dot" id="dot-rooms"></span>
+            Rooms: idle
+          </span>
+        </div>
+
+        <div class="result" id="r-rooms"></div>
+      </div>
+
+      <!-- ══════════════ INSTRUCTORS ══════════════ -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>4. Instructors (IN: UniTime → App)</h2>
+            <p class="desc">Calls <code>GET /api/unitime/instructors?term=...</code> — fetches instructor data by department.</p>
+          </div>
+        </div>
+
+        <select id="sel-instr">
+          <option value="Fal2010woebegon">Fal 2010 woebegon (has data)</option>
+          <option value="Fall2025Main">Fall 2025 Main (empty)</option>
+        </select>
+
+        <div class="actions">
+          <button class="btn btn-blue" onclick="testInstructors(false)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+            </svg>
+            Get Instructors (Table)
+          </button>
+
+          <button class="btn btn-gray" onclick="testInstructors(true)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            Raw JSON
+          </button>
+
+          <span class="pill" id="pill-instr">
+            <span class="dot" id="dot-instr"></span>
+            Instructors: idle
+          </span>
+        </div>
+
+        <div class="result" id="r-instr"></div>
+      </div>
+
+      <!-- ══════════════ ENROLLMENTS ══════════════ -->
+      <div class="card full">
+        <div class="card-head">
+          <div>
+            <h2>5. Enrollments (IN: UniTime → App)</h2>
+            <p class="desc">Calls <code>GET /api/unitime/enrollments?term=...</code> — currently empty but endpoint works.</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-blue" onclick="testEnrollments()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Get Enrollments
+          </button>
+
+          <span class="pill" id="pill-enroll">
+            <span class="dot" id="dot-enroll"></span>
+            Enrollments: idle
+          </span>
+        </div>
+
+        <div class="result" id="r-enroll"></div>
+
+        <div class="meta-row">
+          <div class="pill">
+            <span class="dot ok"></span>
+            Tip: Use "Raw JSON" when you debug payload structure.
+          </div>
+          <div class="pill">
+            <span class="dot load"></span>
+            State indicator updates automatically per test.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">AI Timetable System | UniTime Integration Test</div>
+  </div>
+
+  <script>
+    function el(id) { return document.getElementById(id); }
+
+    function setPill(name, state, text) {
+      const dot = el('dot-' + name);
+      const pill = el('pill-' + name);
+      if (!dot || !pill) return;
+
+      dot.className = 'dot';
+      if (state === 'ok') dot.classList.add('ok');
+      if (state === 'err') dot.classList.add('err');
+      if (state === 'load') dot.classList.add('load');
+
+      pill.innerHTML = '<span class="dot ' + (state || '') + '" id="dot-' + name + '"></span>' + text;
+      const newDot = pill.querySelector('.dot');
+      newDot.className = 'dot';
+      if (state === 'ok') newDot.classList.add('ok');
+      if (state === 'err') newDot.classList.add('err');
+      if (state === 'load') newDot.classList.add('load');
+    }
+
+    function show(id, text, cls) {
+      const e = el(id);
+      e.className = 'result visible ' + cls;
+      if (typeof text === 'object') text = JSON.stringify(text, null, 2);
+      e.textContent = text;
+    }
+
+    function showHtml(id, html, cls) {
+      const e = el(id);
+      e.className = 'result visible ' + cls;
+      e.innerHTML = html;
+    }
+
+    async function api(url) {
+      const r = await fetch(url);
+      return await r.json();
+    }
+
+    async function testHealth() {
+      setPill('health', 'load', 'Health: connecting');
+      show('r-health', 'Connecting...', 'load');
+      try {
+        const d = await api('/api/unitime/health');
+        if (d.connected) {
+          let t = 'STATUS: CONNECTED\n\n';
+          t += `Sessions found: ${d.session_count}\n\n`;
+          d.sessions.forEach(s => {
+            t += `  ${s.reference}\n`;
+            t += `    ${s.label}`;
+            t += s.has_classes ? ' [has class data]\n\n' : ' [empty]\n\n';
+          });
+          setPill('health', 'ok', 'Health: connected');
+          show('r-health', t, 'ok');
+        } else {
+          setPill('health', 'err', 'Health: disconnected');
+          show('r-health', 'DISCONNECTED\n\n' + d.error, 'err');
+        }
+      } catch(e) {
+        setPill('health', 'err', 'Health: error');
+        show('r-health', 'Network error: ' + e.message, 'err');
+      }
+    }
+
+    async function testSessions() {
+      setPill('sessions', 'load', 'Sessions: loading');
+      show('r-sessions', 'Loading...', 'load');
+      try {
+        const d = await api('/api/unitime/sessions');
+        if (!d.success) {
+          setPill('sessions', 'err', 'Sessions: error');
+          show('r-sessions', d.error, 'err');
+          return;
+        }
+
+        let html = `<strong>${d.count} session(s) found</strong>`;
+        html += '<table class="data"><tr><th>Reference</th><th>Term</th><th>Year</th><th>Campus</th><th>Dates</th><th>Status</th></tr>';
+        d.data.forEach(s => {
+          const status = s.status || {};
+          const cls = status.classes ? 'Classes' : '—';
+          html += `<tr>
+            <td><strong>${s.reference}</strong></td>
+            <td>${s.term}</td>
+            <td>${s.year}</td>
+            <td>${s.campus}</td>
+            <td>${s.beginDate} → ${s.endDate}</td>
+            <td>${status.label}<br><small>${cls}</small></td>
+          </tr>`;
+        });
+        html += '</table>';
+
+        setPill('sessions', 'ok', `Sessions: ${d.count} loaded`);
+        showHtml('r-sessions', html, 'ok');
+      } catch(e) {
+        setPill('sessions', 'err', 'Sessions: error');
+        show('r-sessions', 'Error: ' + e.message, 'err');
+      }
+    }
+
+    async function testRooms(raw) {
+      const term = el('sel-rooms').value;
+      setPill('rooms', 'load', 'Rooms: loading');
+      show('r-rooms', 'Loading...', 'load');
+
+      try {
+        const d = await api('/api/unitime/rooms?term=' + term);
+        if (!d.success) {
+          setPill('rooms', 'err', 'Rooms: error');
+          show('r-rooms', d.error, 'err');
+          return;
+        }
+
+        if (raw) {
+          setPill('rooms', 'ok', `Rooms: ${d.count} (raw)`);
+          show('r-rooms', d, 'ok');
+          return;
+        }
+
+        if (d.count === 0) {
+          setPill('rooms', 'ok', 'Rooms: 0 found');
+          show('r-rooms', `No rooms found for "${term}".`, 'ok');
+          return;
+        }
+
+        let html = `<strong>${d.count} room(s) for "${term}"</strong>`;
+        html += '<table class="data"><tr><th>Room</th><th>Building</th><th>Type</th><th>Capacity</th><th>Features</th></tr>';
+        d.rooms.forEach(r => {
+          const feats = (r.features || []).map(f => `<span class="tag">${f}</span>`).join(' ');
+          html += `<tr>
+            <td><strong>${r.full_name}</strong></td>
+            <td>${r.building_name}</td>
+            <td>${r.type}</td>
+            <td>${r.capacity} (exam: ${r.exam_capacity})</td>
+            <td>${feats || '—'}</td>
+          </tr>`;
+        });
+        html += '</table>';
+
+        setPill('rooms', 'ok', `Rooms: ${d.count} loaded`);
+        showHtml('r-rooms', html, 'ok');
+      } catch(e) {
+        setPill('rooms', 'err', 'Rooms: error');
+        show('r-rooms', 'Error: ' + e.message, 'err');
+      }
+    }
+
+    async function testInstructors(raw) {
+      const term = el('sel-instr').value;
+      setPill('instr', 'load', 'Instructors: loading');
+      show('r-instr', 'Loading...', 'load');
+
+      try {
+        const d = await api('/api/unitime/instructors?term=' + term);
+        if (!d.success) {
+          setPill('instr', 'err', 'Instructors: error');
+          show('r-instr', d.error, 'err');
+          return;
+        }
+
+        if (raw) {
+          setPill('instr', 'ok', `Instructors: ${d.instructor_count} (raw)`);
+          show('r-instr', d, 'ok');
+          return;
+        }
+
+        if (d.instructor_count === 0) {
+          setPill('instr', 'ok', 'Instructors: 0 found');
+          show('r-instr', `No instructors found for "${term}".`, 'ok');
+          return;
+        }
+
+        let html = `<strong>${d.instructor_count} instructor(s) across ${d.department_count} department(s)</strong>`;
+        html += '<table class="data"><tr><th>Name</th><th>Position</th><th>Department</th><th>External ID</th><th>Email</th></tr>';
+        d.instructors.forEach(i => {
+          html += `<tr>
+            <td><strong>${i.name}</strong></td>
+            <td>${i.position || '—'}</td>
+            <td>${i.department} (${i.department_abbr})</td>
+            <td>${i.external_id || '—'}</td>
+            <td>${i.email || '—'}</td>
+          </tr>`;
+        });
+        html += '</table>';
+
+        setPill('instr', 'ok', `Instructors: ${d.instructor_count} loaded`);
+        showHtml('r-instr', html, 'ok');
+      } catch(e) {
+        setPill('instr', 'err', 'Instructors: error');
+        show('r-instr', 'Error: ' + e.message, 'err');
+      }
+    }
+
+    async function testEnrollments() {
+      setPill('enroll', 'load', 'Enrollments: loading');
+      show('r-enroll', 'Loading...', 'load');
+
+      try {
+        const d = await api('/api/unitime/enrollments?term=Fal2010woebegon');
+        if (d.success && d.count === 0) {
+          setPill('enroll', 'ok', 'Enrollments: 0 (endpoint OK)');
+          show('r-enroll',
+            'Endpoint works. No enrollment data loaded in UniTime.\nThis confirms the connection — data will appear once enrollments are imported.',
+            'ok'
+          );
+        } else {
+          setPill('enroll', d.success ? 'ok' : 'err', d.success ? 'Enrollments: loaded' : 'Enrollments: error');
+          show('r-enroll', d, d.success ? 'ok' : 'err');
+        }
+      } catch(e) {
+        setPill('enroll', 'err', 'Enrollments: error');
+        show('r-enroll', 'Error: ' + e.message, 'err');
+      }
+    }
+  </script>
+</body>
+</html>

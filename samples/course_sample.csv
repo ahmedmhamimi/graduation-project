@@ -1,0 +1,49 @@
+subject,course_number,title,credits,has_lab,expected_enrollment
+AGN,1001,Fundamentals of Computing,3,yes,100
+AGN,1002,Calculus I,3,no,100
+AGN,1003,Engineering Physics,3,yes,100
+AGN,1004,Technical English,2,no,100
+AGN,1005,Linear Algebra,3,no,100
+AGN,1006,Calculus II,3,no,100
+AGN,1007,Logic Circuits,3,yes,100
+AGN,1008,Introduction to Programming,3,yes,100
+AIN,2001,Data Structures and Algorithms,3,yes,50
+AIN,2002,Object-Oriented Design,3,yes,50
+AIN,2003,Discrete Structures,3,no,50
+AIN,2004,Computer Organization,3,yes,50
+AIN,2005,Algorithm Analysis,3,yes,50
+AIN,2006,Database Management,3,yes,50
+AIN,2007,Operating Systems,3,yes,50
+AIN,2008,Software Engineering,3,yes,50
+AIN,3001,Foundations of Machine Learning,3,yes,50
+AIN,3002,Intelligent Systems,3,yes,50
+AIN,3003,Deep Neural Networks,3,yes,50
+AIN,3004,Image Processing,3,yes,50
+AIN,3005,Text Mining and NLP,3,yes,50
+AIN,3006,Pattern Recognition,3,yes,50
+AIN,3007,Knowledge Representation,3,yes,50
+AIN,3008,Expert Systems,3,yes,50
+ADS,2001,Probability and Statistics,3,yes,50
+ADS,2002,Exploratory Data Analysis,3,yes,50
+ADS,2003,Data Wrangling with Python,3,yes,50
+ADS,2004,Statistical Inference,3,yes,50
+ADS,3001,Data Mining Techniques,3,yes,50
+ADS,3002,Distributed Computing,3,yes,50
+ADS,3003,Information Visualization,3,yes,50
+ADS,3004,Predictive Modeling,3,yes,50
+ADS,3005,Business Analytics,3,yes,50
+ADS,3006,Time Series Forecasting,3,yes,50
+AIN,4001,Advanced Reinforcement Learning,3,yes,25
+AIN,4002,Autonomous Agents,3,yes,25
+ADS,4001,Scalable Machine Learning,3,yes,25
+ADS,4002,Data Pipeline Engineering,3,yes,25
+AIN,4901,Capstone Project I,3,no,50
+AIN,4902,Capstone Project II,6,no,50
+ADS,4901,Capstone Project I,3,no,50
+ADS,4902,Capstone Project II,6,no,50
+AGN,4801,Industrial Training,3,no,100
+AGN,4802,Field Internship,6,no,50
+EBA,2001,Academic Writing,2,no,100
+EBA,3001,Engineering Ethics,2,no,100
+EBA,3002,Innovation and Startups,2,no,50
+EBA,4001,Leadership and Management,2,no,50

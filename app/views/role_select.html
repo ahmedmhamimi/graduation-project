@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block body_class %}{% endblock %}
+
+{% block back_button %}{% endblock %}
+
+{% block content %}
+<div class="role-selection-wrapper">
+    <div class="container">
+        <div class="d-flex align-items-center gap-2 mb-3 pt-3">
+            <a href="/" class="back-btn">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                Main Menu
+            </a>
+        </div>
+
+        <div class="text-center mb-5">
+            <div class="university-logo-container mx-auto">
+                <img src="{{ url_for('static', path='/img/logo.png') }}" alt="University Logo">
+            </div>
+        </div>
+
+        <div class="role-selection-header">
+            <h1 class="role-selection-title">College of Artificial Intelligence (CAI) Timetable System</h1>
+            <div class="decorative-line"></div>
+            <p class="role-selection-subtitle">Select your role to sign in or create an account</p>
+        </div>
+
+        <div class="row g-4 mb-5">
+            {% for role in roles %}
+            <div class="col-md-6 col-lg-3">
+                <div class="role-card" onclick="window.location.href='{{ role.login_url }}'">
+                    <div class="role-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="{{ role.icon_svg }}"/>
+                        </svg>
+                    </div>
+                    <h3 class="role-title">{{ role.title }}</h3>
+                    <p class="role-description">{{ role.description | default('') }}</p>
+                    <a href="{{ role.login_url }}" class="role-action">
+                        Continue
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="card-academic animate-fade-in">
+            <div class="row g-4">
+                <div class="col-md-4 text-center">
+                    <div class="mb-3">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,5A3,3 0 0,1 15,8A3,3 0 0,1 12,11A3,3 0 0,1 9,8A3,3 0 0,1 12,5M17.13,17C15.92,18.85 14.11,20.24 12,20.92C9.89,20.24 8.08,18.85 6.87,17C6.53,16.5 6.24,16 6,15.47C6,13.82 8.71,12.47 12,12.47C15.29,12.47 18,13.79 18,15.47C17.76,16 17.47,16.5 17.13,17Z" fill="var(--primary-blue)"/>
+                        </svg>
+                    </div>
+                    <h4 class="h5 text-primary-academic fw-bold">Secure &amp; Protected</h4>
+                    <p class="text-secondary-academic">Advanced security system for your academic data</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="mb-3">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" fill="var(--primary-blue)"/>
+                        </svg>
+                    </div>
+                    <h4 class="h5 text-primary-academic fw-bold">Available 24/7</h4>
+                    <p class="text-secondary-academic">Access your schedule anytime, anywhere</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="mb-3">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10,21V19H6.41L10.91,14.5L9.5,13.09L5,17.59V14H3V21H10M14.5,10.91L19,6.41V10H21V3H14V5H17.59L13.09,9.5L14.5,10.91Z" fill="var(--primary-blue)"/>
+                        </svg>
+                    </div>
+                    <h4 class="h5 text-primary-academic fw-bold">Easy to Use</h4>
+                    <p class="text-secondary-academic">Simple and intuitive interface</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-academic mt-4 text-center">
+            <p class="mb-0 text-secondary-academic">
+                Powered by <span class="footer-academic-logo">UniTime &amp; Supabase</span>
+            </p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

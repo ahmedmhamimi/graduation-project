@@ -1,0 +1,1334 @@
+/* =====================================================
+   UNIVERSITY TIMETABLE SYSTEM - CUSTOM STYLES
+   Academic, Clean, Professional Design
+   ===================================================== */
+
+/* =====================================================
+   COLOR PALETTE
+   ===================================================== */
+:root {
+    --primary-blue: #1a4d7a;
+    --secondary-blue: #2563a8;
+    --accent-blue: #3b82f6;
+    --light-blue: #d4e4f0;
+    --lighter-blue: #e8f2f9;
+    --dark-gray: #1a1a2e;
+    --medium-gray: #6b7280;
+    --light-gray: #f0f2f5;
+    --border-gray: #e0e0e0;
+    --success-green: #27ae60;
+    --warning-orange: #f39c12;
+    --danger-red: #e74c3c;
+    --text-primary: #1a1a2e;
+    --text-secondary: #6b7280;
+}
+
+/* =====================================================
+   GLOBAL STYLES
+   ===================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-primary);
+    background: var(--light-gray);
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+    color: var(--primary-blue);
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--secondary-blue);
+}
+
+/* =====================================================
+   LOGO STYLES (Circular Academic Design)
+   ===================================================== */
+.university-logo-container {
+    display: inline-block;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: white;
+    border: 4px solid var(--primary-blue);
+    box-shadow: 0 0 0 8px rgba(26, 77, 122, 0.15);
+    padding: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.university-logo-container:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 12px rgba(26, 77, 122, 0.2);
+}
+
+.university-logo-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Small logo for navbar */
+.navbar-logo {
+    width: 100px;
+    height: 100px;
+    border: 2px solid var(--primary-blue);
+    box-shadow: 0 0 0 4px rgba(26, 77, 122, 0.1);
+}
+
+/* Medium logo for login/signup pages */
+.auth-logo {
+    width: 100px;
+    height: 100px;
+    border: 3px solid var(--primary-blue);
+    box-shadow: 0 0 0 6px rgba(26, 77, 122, 0.12);
+}
+
+/* =====================================================
+   NAVIGATION BAR
+   ===================================================== */
+.navbar-academic {
+    background: white;
+    border-bottom: 3px solid var(--primary-blue);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.navbar-brand-text {
+    font-size: 2.66rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin-left: 15px;
+}
+
+.navbar-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    display: block;
+    font-weight: 400;
+}
+
+.nav-link {
+    color: var(--text-primary);
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: var(--primary-blue);
+    background: var(--lighter-blue);
+    border-radius: 6px;
+}
+
+.nav-link.active {
+    color: var(--primary-blue);
+    font-weight: 600;
+}
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
+.btn-primary-academic {
+    background: var(--primary-blue);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(26, 77, 122, 0.2);
+}
+
+.btn-primary-academic:hover {
+    background: var(--secondary-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26, 77, 122, 0.3);
+}
+
+.btn-secondary-academic {
+    background: white;
+    border: 2px solid var(--primary-blue);
+    color: var(--primary-blue);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary-academic:hover {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.btn-outline-academic {
+    border: 2px solid var(--border-gray);
+    background: white;
+    color: var(--text-primary);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-academic:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background: var(--lighter-blue);
+}
+
+.btn-coming-soon {
+    opacity: 0.6;
+    cursor: not-allowed;
+    position: relative;
+}
+
+.btn-coming-soon::after {
+    content: 'Coming Soon';
+    position: absolute;
+    top: -25px;
+    right: 0;
+    font-size: 0.93rem;
+    background: var(--warning-orange);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.btn-coming-soon:hover::after {
+    opacity: 1;
+}
+
+/* =====================================================
+   CARDS & CONTAINERS
+   ===================================================== */
+.card-academic h2 {
+    font-size: 45px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.card-academic p {
+    font-size: 24px;
+    font-weight: 500;
+    margin-top: 8px;
+}
+
+.card-academic {
+    background: white;
+    border: 1px solid var(--border-gray);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.card-academic:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.card-header-academic {
+    background: var(--lighter-blue);
+    border-bottom: 2px solid var(--primary-blue);
+    padding: 1rem 1.5rem;
+    border-radius: 12px 12px 0 0;
+    font-weight: 600;
+    color: var(--primary-blue);
+}
+
+.stat-card {
+    background: linear-gradient(135deg, white 0%, var(--lighter-blue) 100%);
+    border: 2px solid var(--primary-blue);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(26, 77, 122, 0.15);
+}
+
+.stat-label {
+    font-size: 1.16rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 3.32rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+.stat-subtext {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+/* =====================================================
+   TABLES (Academic Style)
+   ===================================================== */
+.table-academic {
+    width: 100%;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.table-academic thead {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.table-academic th {
+    padding: 1rem;
+    font-weight: 600;
+    text-align: left;
+    border-bottom: 2px solid var(--primary-blue);
+}
+
+.table-academic td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--border-gray);
+}
+
+.table-academic tbody tr:hover {
+    background: var(--lighter-blue);
+}
+
+.table-academic tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Zebra striping */
+.table-striped-academic tbody tr:nth-child(odd) {
+    background: #f9fafb;
+}
+
+.table-striped-academic tbody tr:nth-child(odd):hover {
+    background: var(--lighter-blue);
+}
+
+/* Timetable specific styling */
+.timetable-cell {
+    min-height: 120px;
+    position: relative;
+    vertical-align: top;
+    padding: 0.5rem;
+}
+
+.timetable-course {
+    position: absolute;
+    inset: 0.5rem;
+    border: 2px solid var(--primary-blue);
+    border-radius: 6px;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, white 0%, var(--lighter-blue) 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+.timetable-course:hover {
+    border-color: var(--secondary-blue);
+    box-shadow: 0 4px 12px rgba(26, 77, 122, 0.2);
+    transform: scale(1.02);
+}
+
+.timetable-course-name {
+    font-weight: 700;
+    color: var(--primary-blue);
+    font-size: 1.16rem;
+    margin-bottom: 0.25rem;
+}
+
+.timetable-course-code {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.timetable-course-room {
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.instructor-table th,
+.instructor-table td {
+    text-align: center;
+}
+
+/* =====================================================
+   BADGES & TAGS
+   ===================================================== */
+.badge-academic {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge-active {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.badge-inactive {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.badge-pending {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.badge-info {
+    background: var(--lighter-blue);
+    color: var(--primary-blue);
+    border: 1px solid var(--light-blue);
+}
+
+.badge-semester {
+    background: var(--primary-blue);
+    color: white;
+}
+
+/* =====================================================
+   FORMS
+   ===================================================== */
+.form-academic {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.form-label-academic {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    display: block;
+    font-size: 1.16rem;
+}
+
+.form-control-academic {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-gray);
+    border-radius: 8px;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.form-control-academic:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 4px rgba(26, 77, 122, 0.1);
+}
+
+.form-control-academic::placeholder {
+    color: #9ca3af;
+}
+
+.input-group-academic {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    width: 18px;
+    height: 18px;
+}
+
+.input-group-academic .form-control-academic {
+    padding-left: 3rem;
+}
+
+/* =====================================================
+   ALERTS & NOTIFICATIONS
+   ===================================================== */
+.alert-academic {
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+}
+
+.alert-academic svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.alert-info {
+    background: var(--lighter-blue);
+    color: var(--primary-blue);
+    border: 1px solid var(--light-blue);
+}
+
+/* =====================================================
+   TABS
+   ===================================================== */
+.nav-tabs-academic {
+    border-bottom: 2px solid var(--border-gray);
+    margin-bottom: 1.5rem;
+}
+
+.nav-tabs-academic .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs-academic .nav-link:hover {
+    border-bottom-color: var(--light-blue);
+    background: transparent;
+}
+
+.nav-tabs-academic .nav-link.active {
+    color: var(--primary-blue);
+    border-bottom-color: var(--primary-blue);
+    background: transparent;
+    font-weight: 600;
+}
+
+/* =====================================================
+   ROLE SELECTION PAGE
+   ===================================================== */
+.role-selection-wrapper {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #d4e4f0 0%, #c8dbe8 50%, #e0ecf5 100%);
+    padding: 3rem 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.role-selection-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(26, 77, 122, 0.05) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.role-selection-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.role-selection-title {
+    font-size: 4rem;
+    color: var(--primary-blue);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.role-selection-subtitle {
+    font-size: 1.8rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.decorative-line {
+    width: 120px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-blue), var(--secondary-blue));
+    margin: 1.25rem auto;
+    border-radius: 2px;
+}
+
+.role-card {
+    background: white;
+    border-radius: 18px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+}
+
+.role-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, var(--primary-blue), var(--secondary-blue));
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.role-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(26, 77, 122, 0.18);
+    border-color: var(--light-blue);
+}
+
+.role-card:hover::before {
+    transform: scaleX(1);
+}
+
+.role-icon {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 1.75rem;
+    background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    border: 2px solid var(--primary-blue);
+    box-shadow: 0 0 0 4px rgba(26, 77, 122, 0.15);
+}
+
+.role-card:hover .role-icon {
+    transform: scale(1.12);
+    background: linear-gradient(135deg, var(--secondary-blue) 0%, var(--primary-blue) 100%);
+}
+
+.role-icon svg {
+    width: 45px;
+    height: 45px;
+    fill: var(--primary-blue);
+    transition: fill 0.3s ease;
+}
+
+.role-card:hover .role-icon svg {
+    fill: white;
+}
+
+.role-title {
+    font-size: 2.33rem;
+    color: var(--primary-blue);
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.role-description {
+    font-size: 1.46rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.75rem;
+    line-height: 1.7;
+}
+
+.role-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary-blue);
+    font-weight: 600;
+    font-size: 1.4rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.role-card:hover .role-action {
+    gap: 14px;
+    color: var(--secondary-blue);
+}
+
+/* =====================================================
+   LOGIN / SIGNUP PAGES
+   ===================================================== */
+.auth-wrapper {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #d4e4f0 0%, #c8dbe8 50%, #e0ecf5 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    max-width: 450px;
+    width: 100%;
+}
+
+.auth-header {
+    background: linear-gradient(
+        135deg,
+        var(--primary-blue) 0%,
+        var(--secondary-blue) 50%,
+        var(--accent-blue) 100%
+    );
+    padding: 2.5rem 2rem;
+    text-align: center;
+    color: white;
+}
+
+.auth-title {
+    font-size: 2.66rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+    font-size: 1.33rem;
+    opacity: 0.95;
+}
+
+.auth-body {
+    padding: 2.5rem 2rem;
+}
+
+.role-badge-container {
+    background: linear-gradient(135deg, var(--lighter-blue) 0%, var(--light-blue) 100%);
+    border: 2px solid var(--primary-blue);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.role-badge-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--primary-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.role-badge-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: white;
+}
+
+.role-badge-text-container {
+    text-align: left;
+}
+
+.role-badge-label {
+    font-size: 0.93rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.role-badge-value {
+    font-size: 1.46rem;
+    color: var(--primary-blue);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* =====================================================
+   FOOTER
+   ===================================================== */
+.footer-academic {
+    background: white;
+    border-top: 2px solid var(--border-gray);
+    padding: 2rem 0;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.16rem;
+}
+
+.footer-academic-logo {
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+/* =====================================================
+   UTILITY CLASSES
+   ===================================================== */
+.text-primary-academic   { color: var(--primary-blue); }
+.text-secondary-academic { color: var(--text-secondary); }
+.bg-light-academic       { background: var(--light-gray); }
+.bg-lighter-blue         { background: var(--lighter-blue); }
+.border-primary-academic { border-color: var(--primary-blue); }
+.shadow-academic         { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+.shadow-academic-lg      { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); }
+
+/* =====================================================
+   RESPONSIVE DESIGN
+   ===================================================== */
+@media (max-width: 768px) {
+    .role-selection-title    { font-size: 2.93rem; }
+    .role-selection-subtitle { font-size: 1.46rem; }
+    .role-title              { font-size: 2rem; }
+    .role-description        { font-size: 1.33rem; }
+    .stat-value              { font-size: 2.66rem; }
+    .auth-title              { font-size: 2.33rem; }
+}
+
+@media (max-width: 576px) {
+    .university-logo-container { width: 100px; height: 100px; }
+    .auth-logo                 { width: 80px;  height: 80px; }
+    .role-selection-title      { font-size: 2.33rem; }
+    .stat-value                { font-size: 2.33rem; }
+}
+
+/* =====================================================
+   ANIMATIONS
+   ===================================================== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeIn 0.6s ease-out; }
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-right { animation: slideInRight 0.5s ease-out; }
+
+/* =====================================================
+   PRINT STYLES
+   ===================================================== */
+@media print {
+    .navbar-academic,
+    .footer-academic,
+    .btn-primary-academic,
+    .btn-secondary-academic { display: none; }
+
+    .card-academic {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+
+    body { background: white; }
+}
+
+/* =====================================================
+   WEEKLY TIMETABLE GRID — AIET Style
+   ===================================================== */
+.timetable-container {
+    width: 100%;
+    background: white;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.timetable-header-bar {
+    background: var(--primary-blue);
+    color: white;
+    padding: 25px 40px;
+    font-size: 35px;
+    font-weight: 800;
+}
+
+.timetable-grid {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.timetable-grid thead th {
+    font-size: 24px;
+    font-weight: 800;
+    padding: 20px 12px;
+    background: #eef2f6;
+    border-bottom: 2px solid #d8dee6;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.timetable-grid thead th.time-header {
+    width: 100px;
+    min-width: 100px;
+    background: #e8ecf0;
+}
+
+.timetable-grid tbody td {
+    border: 1px solid #e4e8ee;
+    vertical-align: top;
+    text-align: center;
+    padding: 0;
+}
+
+.timetable-grid .time-cell {
+    background: #f8fafc;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--primary-blue);
+    line-height: 1.4;
+    padding: 15px 10px;
+    width: 100px;
+    min-width: 100px;
+    vertical-align: middle;
+}
+
+.timetable-grid .timetable-td {
+    height: auto;
+    min-height: 80px;
+    padding: 6px;
+    position: relative;
+}
+
+/* Empty timetable placeholder */
+.empty-timetable {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+}
+
+.empty-timetable h5 {
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.empty-timetable p {
+    color: var(--medium-gray);
+    font-size: 19px;
+}
+
+/* ─────────────────────────────────────────────────────
+   COURSE CARD BASE
+   ───────────────────────────────────────────────────── */
+.course-card {
+    width: 95%;
+    margin: 0 auto 4px auto;
+    padding: 10px 8px;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.course-card:last-child { margin-bottom: 0; }
+
+.course-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+    position: relative;
+}
+
+.course-card .course-name {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    line-height: 1.25;
+}
+
+.course-card .course-details {
+    font-size: 21px;
+    font-weight: 600;
+    opacity: 0.85;
+    line-height: 1.4;
+}
+
+/* =====================================================
+   COURSE COLORS — 20 unique slots (0–19)
+   ═══════════════════════════════════════════════════
+   Matches COURSE_COLOR_MAP in main.py exactly:
+
+    0  → AIN 3103  Deep Learning              Blue
+    1  → AIN 3104  Image Processing           Indigo  ★ DARKENED
+    2  → ADS 3101  Statistics Lab             Green
+    3  → ADS 3102  Advanced Database          Teal    ★ DARKENED
+    4  → ADS 3103  Statistics for DS          Emerald
+    5  → AGN 1101  Intro to Computing         Purple
+    6  → AGN 1103  Data Structures            Violet
+    7  → AGN 2302  Operating Systems          Fuchsia
+    8  → AIS 3101  Intelligent Robotics       Orange
+    9  → ACY 3102  Data Security              Red
+   10  → APT 3201  Practical Training         Amber
+   11  → (auto)    future course              Rose
+   12  → (auto)    future course              Cyan
+   13  → (auto)    future course              Lime
+   14  → (auto)    future course              Sky
+   15  → (auto)    future course              Pink
+   16  → (auto)    future course              Yellow
+   17  → (auto)    future course              Slate
+   18  → (auto)    future course              Brown
+   19  → (auto)    future course              Deep Blue
+   ===================================================== */
+
+/* 0 — AIN 3103 Deep Learning → Blue */
+.course-color-0 {
+    background: #dbeafe;
+    border-left: 6px solid #2563eb;
+    color: #1e3a8a;
+}
+.course-tag.course-color-0 {
+    background: #dbeafe;
+    color: #1e3a8a;
+}
+
+/* 1 — AIN 3104 Image Processing → Indigo DARKENED */
+.course-color-1 {
+    background: #c7d2fe;           /* was #e0e7ff → noticeably deeper */
+    border-left: 6px solid #3730a3; /* was #4338ca → richer indigo     */
+    color: #1e1b4b;                /* was #312e81 → near-black indigo  */
+}
+.course-tag.course-color-1 {
+    background: #c7d2fe;
+    color: #1e1b4b;
+}
+
+/* 2 — ADS 3101 Statistics Lab → Green */
+.course-color-2 {
+    background: #d1fae5;
+    border-left: 6px solid #059669;
+    color: #065f46;
+}
+.course-tag.course-color-2 {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* 3 — ADS 3102 Advanced Database → Teal DARKENED */
+.course-color-3 {
+    background: #99f6e4;           /* was #ccfbf1 → much richer teal   */
+    border-left: 6px solid #0f766e; /* was #0d9488 → deeper teal        */
+    color: #042f2e;                /* was #134e4a → very dark teal      */
+}
+.course-tag.course-color-3 {
+    background: #99f6e4;
+    color: #042f2e;
+}
+
+/* 4 — ADS 3103 Statistics for Data Science → Emerald */
+.course-color-4 {
+    background: #d1fae5;
+    border-left: 6px solid #10b981;
+    color: #064e3b;
+}
+.course-tag.course-color-4 {
+    background: #d1fae5;
+    color: #064e3b;
+}
+
+/* 5 — AGN 1101 Introduction to Computing → Purple */
+.course-color-5 {
+    background: #ede9fe;
+    border-left: 6px solid #7c3aed;
+    color: #4c1d95;
+}
+.course-tag.course-color-5 {
+    background: #ede9fe;
+    color: #4c1d95;
+}
+
+/* 6 — AGN 1103 Data Structures & Algorithms → Violet */
+.course-color-6 {
+    background: #f3e8ff;
+    border-left: 6px solid #9333ea;
+    color: #581c87;
+}
+.course-tag.course-color-6 {
+    background: #f3e8ff;
+    color: #581c87;
+}
+
+/* 7 — AGN 2302 Operating Systems → Fuchsia */
+.course-color-7 {
+    background: #fdf4ff;
+    border-left: 6px solid #c026d3;
+    color: #701a75;
+}
+.course-tag.course-color-7 {
+    background: #fdf4ff;
+    color: #701a75;
+}
+
+/* 8 — AIS 3101 Intelligent Robotics → Orange */
+.course-color-8 {
+    background: #ffedd5;
+    border-left: 6px solid #ea580c;
+    color: #7c2d12;
+}
+.course-tag.course-color-8 {
+    background: #ffedd5;
+    color: #7c2d12;
+}
+
+/* 9 — ACY 3102 Data Security → Red */
+.course-color-9 {
+    background: #fee2e2;
+    border-left: 6px solid #dc2626;
+    color: #7f1d1d;
+}
+.course-tag.course-color-9 {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+/* 10 — APT 3201 Practical Training → Amber */
+.course-color-10 {
+    background: #fef3c7;
+    border-left: 6px solid #d97706;
+    color: #78350f;
+}
+.course-tag.course-color-10 {
+    background: #fef3c7;
+    color: #78350f;
+}
+
+/* 11 — Auto-assigned → Rose */
+.course-color-11 {
+    background: #ffe4e6;
+    border-left: 6px solid #e11d48;
+    color: #881337;
+}
+.course-tag.course-color-11 {
+    background: #ffe4e6;
+    color: #881337;
+}
+
+/* 12 — Auto-assigned → Cyan */
+.course-color-12 {
+    background: #cffafe;
+    border-left: 6px solid #0891b2;
+    color: #164e63;
+}
+.course-tag.course-color-12 {
+    background: #cffafe;
+    color: #164e63;
+}
+
+/* 13 — Auto-assigned → Lime */
+.course-color-13 {
+    background: #ecfccb;
+    border-left: 6px solid #65a30d;
+    color: #365314;
+}
+.course-tag.course-color-13 {
+    background: #ecfccb;
+    color: #365314;
+}
+
+/* 14 — Auto-assigned → Sky */
+.course-color-14 {
+    background: #e0f2fe;
+    border-left: 6px solid #0284c7;
+    color: #0c4a6e;
+}
+.course-tag.course-color-14 {
+    background: #e0f2fe;
+    color: #0c4a6e;
+}
+
+/* 15 — Auto-assigned → Pink */
+.course-color-15 {
+    background: #fce7f3;
+    border-left: 6px solid #db2777;
+    color: #831843;
+}
+.course-tag.course-color-15 {
+    background: #fce7f3;
+    color: #831843;
+}
+
+/* 16 — Auto-assigned → Yellow */
+.course-color-16 {
+    background: #fef9c3;
+    border-left: 6px solid #ca8a04;
+    color: #713f12;
+}
+.course-tag.course-color-16 {
+    background: #fef9c3;
+    color: #713f12;
+}
+
+/* 17 — Auto-assigned → Slate */
+.course-color-17 {
+    background: #f1f5f9;
+    border-left: 6px solid #475569;
+    color: #1e293b;
+}
+.course-tag.course-color-17 {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+/* 18 — Auto-assigned → Brown / Stone */
+.course-color-18 {
+    background: #f5f0eb;
+    border-left: 6px solid #92400e;
+    color: #451a03;
+}
+.course-tag.course-color-18 {
+    background: #f5f0eb;
+    color: #451a03;
+}
+
+/* 19 — Auto-assigned → Deep Blue */
+.course-color-19 {
+    background: #dde8f8;
+    border-left: 6px solid #1d4ed8;
+    color: #1e3a8a;
+}
+.course-tag.course-color-19 {
+    background: #dde8f8;
+    color: #1e3a8a;
+}
+
+/* =====================================================
+   COURSE SUMMARY TABLE
+   ===================================================== */
+.instructors-section {
+    background: white;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.section-title-bar {
+    background: var(--primary-blue);
+    color: white;
+    padding: 20px 40px;
+    font-size: 29px;
+    font-weight: 800;
+}
+
+.instructor-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.instructor-table thead th {
+    background: #1f4f78;
+    color: white;
+    font-size: 21px;
+    font-weight: 700;
+    padding: 16px 20px;
+    text-align: center;
+}
+
+.instructor-table tbody td {
+    font-size: 20px;
+    padding: 16px 20px;
+    text-align: center;
+    border-bottom: 1px solid #e4e8ee;
+    vertical-align: middle;
+}
+
+.instructor-table tbody tr:hover          { background: #f8fafc; }
+.instructor-table tbody tr:last-child td  { border-bottom: none; }
+
+.course-tag {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 17px;
+}
+
+/* =====================================================
+   RESPONSIVE TIMETABLE
+   ===================================================== */
+@media (max-width: 992px) {
+    .timetable-grid thead th      { font-size: 19px; padding: 12px 6px; }
+    .timetable-grid .time-cell    { font-size: 17px; width: 80px; min-width: 80px; }
+    .timetable-grid .timetable-td { min-height: 60px; padding: 4px; }
+    .course-card                  { padding: 8px 4px; }
+    .course-card .course-name     { font-size: 16px; }
+    .course-card .course-details  { font-size: 13px; }
+}
+
+@media (max-width: 768px) {
+    .timetable-header-bar         { padding: 15px 20px; font-size: 27px; }
+    .timetable-grid               { font-size: 16px; }
+    .timetable-grid thead th      { font-size: 15px; padding: 10px 4px; }
+    .timetable-grid .time-cell    { font-size: 15px; width: 60px; min-width: 60px; padding: 8px 4px; }
+    .timetable-grid .timetable-td { min-height: 50px; padding: 2px; }
+    .course-card                  { padding: 6px 2px; border-left-width: 4px; border-radius: 8px; }
+    .course-card .course-name     { font-size: 13px; margin-bottom: 2px; }
+    .course-card .course-details  { font-size: 11px; }
+}
+
+/* =====================================================
+   PRINT STYLES FOR TIMETABLE
+   ===================================================== */
+@media print {
+    .timetable-container  { box-shadow: none; border: 2px solid #333; }
+    .timetable-header-bar {
+        background: #333 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .course-card {
+        box-shadow: none;
+        border: 1px solid #999;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .instructors-section { page-break-inside: avoid; }
+}

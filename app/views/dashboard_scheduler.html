@@ -1,0 +1,1777 @@
+{% extends "base.html" %}
+
+{% block back_button %}{% endblock %}
+
+{% block content %}
+
+<nav class="navbar navbar-expand-lg navbar-academic sticky-top">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center">
+            <div class="university-logo-container navbar-logo">
+                <img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo">
+            </div>
+            <div class="ms-3">
+                <span class="navbar-brand-text mb-0">{{ user.name if user else "Scheduler" }}</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <a href="#" class="back-btn"
+               onclick="event.preventDefault(); fetch('/logout').then(() => window.location.href = '/portal');">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                          d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back
+            </a>
+            {% if not show_analysis %}
+            <a href="/admin/analysis" class="btn btn-outline-academic btn-sm">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                     style="margin-right:4px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0
+                             002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2
+                             2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2
+                             2 0 01-2-2z"/>
+                </svg>
+                Analyze Schedule
+            </a>
+            {% endif %}
+            <a href="/logout" class="btn btn-primary-academic btn-sm">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid px-4 py-4">
+
+    {% if flash_success %}
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+             class="me-2" style="vertical-align:text-bottom;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ flash_success }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% if flash_error %}
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+             class="me-2" style="vertical-align:text-bottom;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        {{ flash_error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    {# ── Header Card ── #}
+    <div class="card-academic mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <h5 class="text-primary-academic fw-bold mb-1">{{ title }}</h5>
+                <p class="text-secondary-academic mb-0" style="font-size:0.875rem;">
+                    {% if show_analysis %}
+                    Multi-Agent Schedule Analysis System
+                    {% else %}
+                    {{ permissions.description if permissions else "" }}
+                    {% endif %}
+                </p>
+            </div>
+            {% if show_analysis and analysis_report %}
+            <div class="col-md-6 text-end">
+                <span class="badge bg-{{ analysis_report.status_class }}"
+                      style="font-size:0.9rem;padding:8px 16px;">
+                    {% if analysis_report.is_healthy %}
+                    OK {{ analysis_report.status_label }}
+                    {% else %}
+                    ! {{ analysis_report.status_label }}
+                    {% endif %}
+                </span>
+                <form action="/admin/analysis/refresh" method="POST" class="d-inline ms-2">
+                    <button type="submit" class="btn btn-outline-academic btn-sm">
+                        <svg width="14" height="14" fill="none" stroke="currentColor"
+                             viewBox="0 0 24 24" style="margin-right:2px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11
+                                     11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Re-analyze
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if show_analysis and analysis_error %}
+    <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+             class="me-2">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div><strong>Analysis Error:</strong> {{ analysis_error }}</div>
+    </div>
+    {% endif %}
+
+    {# ── Stats Grid ── #}
+    <div class="row g-3 mb-4">
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Instructors</div>
+                <div class="stat-value">{{ stats.total_instructors }}</div>
+                <div class="stat-subtext">{{ stats.instructors_assigned }} assigned</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Courses</div>
+                <div class="stat-value">{{ stats.total_courses }}</div>
+                <div class="stat-subtext">Active</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Classes</div>
+                <div class="stat-value">{{ stats.total_classes }}</div>
+                <div class="stat-subtext">Scheduled</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Rooms</div>
+                <div class="stat-value">{{ stats.total_rooms }}</div>
+                <div class="stat-subtext">{{ stats.rooms_in_use }} in use</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Students</div>
+                <div class="stat-value">{{ stats.total_students }}</div>
+                <div class="stat-subtext">Enrolled</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-label">Seat Capacity</div>
+                <div class="stat-value">{{ stats.total_room_capacity }}</div>
+                <div class="stat-subtext">Total</div>
+            </div>
+        </div>
+    </div>
+
+    {# ══════════════════════════════════════════════════════
+       MAIN CONTENT CARD
+    ══════════════════════════════════════════════════════ #}
+    <div class="card-academic">
+
+        {% if show_analysis and analysis_report %}
+        {# ── ANALYSIS PANEL ── #}
+        <div class="row g-3 p-3 pb-0">
+            <div class="col-md-3">
+                <div class="card border-0 bg-light">
+                    <div class="card-body text-center py-3">
+                        <div class="text-secondary small mb-1">Agent 1: Constraints</div>
+                        <div class="fs-4 fw-bold {% if analysis_report.constraint_report.is_clean %}text-success{% else %}text-warning{% endif %}">
+                            {{ analysis_report.constraint_report.warning_count }}
+                        </div>
+                        <div class="small text-muted">warnings</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-light">
+                    <div class="card-body text-center py-3">
+                        <div class="text-secondary small mb-1">Agent 2: Validation</div>
+                        <div class="fs-4 fw-bold {% if analysis_report.validation_report.is_feasible %}text-success{% else %}text-danger{% endif %}">
+                            {{ analysis_report.validation_report.hard_count }}
+                        </div>
+                        <div class="small text-muted">hard violations</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-light">
+                    <div class="card-body text-center py-3">
+                        <div class="text-secondary small mb-1">Agent 3: Classification</div>
+                        <div class="fs-4 fw-bold text-primary">
+                            {{ analysis_report.classification_report.critical_count }}
+                        </div>
+                        <div class="small text-muted">critical issues</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-light">
+                    <div class="card-body text-center py-3">
+                        <div class="text-secondary small mb-1">Agent 4: Suggestions</div>
+                        <div class="fs-4 fw-bold text-info">
+                            {{ analysis_report.suggestion_report.total_suggestions }}
+                        </div>
+                        <div class="small text-muted">recommendations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs-academic mt-3" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab"
+                        data-bs-target="#tab-agent-constraints" type="button" role="tab">
+                    <span class="badge bg-secondary me-1">1</span> Constraint Validation
+                    {% if analysis_report.constraint_report.warning_count > 0 %}
+                    <span class="badge bg-warning text-dark ms-1">
+                        {{ analysis_report.constraint_report.warning_count }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#tab-agent-validation" type="button" role="tab">
+                    <span class="badge bg-secondary me-1">2</span> Timetable Validation
+                    {% if analysis_report.validation_report.hard_count > 0 %}
+                    <span class="badge bg-danger ms-1">
+                        {{ analysis_report.validation_report.hard_count }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#tab-agent-classification" type="button" role="tab">
+                    <span class="badge bg-secondary me-1">3</span> Violation Classification
+                    {% if analysis_report.classification_report.total_count > 0 %}
+                    <span class="badge bg-info ms-1">
+                        {{ analysis_report.classification_report.total_count }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#tab-agent-suggestions" type="button" role="tab">
+                    <span class="badge bg-secondary me-1">4</span> Correction Suggestions
+                    {% if analysis_report.suggestion_report.total_suggestions > 0 %}
+                    <span class="badge bg-success ms-1">
+                        {{ analysis_report.suggestion_report.total_suggestions }}</span>
+                    {% endif %}
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content p-4">
+            {# Agent 1 #}
+            <div class="tab-pane fade show active" id="tab-agent-constraints" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-1">Pre-Solve Structural Checks</h6>
+                        <p class="text-muted small mb-0">
+                            Analyzed {{ analysis_report.constraint_report.total_courses }} courses,
+                            {{ analysis_report.constraint_report.total_rooms }} rooms,
+                            {{ analysis_report.constraint_report.total_instructors }} instructors,
+                            {{ analysis_report.constraint_report.total_classes }} classes.
+                        </p>
+                    </div>
+                    <div>
+                        {% if analysis_report.constraint_report.is_clean %}
+                        <span class="badge bg-success" style="font-size:0.85rem;padding:6px 12px;">All Checks Passed</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark" style="font-size:0.85rem;padding:6px 12px;">{{ analysis_report.constraint_report.warning_count }} Warning(s)</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if analysis_report.constraint_report.is_clean %}
+                <div class="alert alert-success d-flex align-items-center">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div><strong>No structural issues detected.</strong></div>
+                </div>
+                {% else %}
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead><tr><th style="width:120px;">Severity</th><th style="width:160px;">Code</th><th>Message</th><th style="width:100px;">Entity</th></tr></thead>
+                        <tbody>
+                            {% for warning in analysis_report.constraint_report.warnings %}
+                            <tr>
+                                <td><span class="badge bg-{{ warning.severity_class }}">{% if warning.code.startswith('CRIT') %}CRITICAL{% elif warning.code.startswith('ERR') %}ERROR{% else %}WARNING{% endif %}</span></td>
+                                <td><code class="small">{{ warning.code }}</code></td>
+                                <td>{{ warning.message }}{% if warning.entity_name %}<br><small class="text-muted">Entity: <strong>{{ warning.entity_name }}</strong></small>{% endif %}</td>
+                                <td><span class="badge bg-light text-dark">{{ warning.entity_type }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="mb-2">Severity Levels</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-danger">CRITICAL</span><span class="text-muted small">- Blocks scheduling</span>
+                        <span class="badge bg-warning text-dark ms-3">ERROR</span><span class="text-muted small">- Data integrity issue</span>
+                        <span class="badge bg-info ms-3">WARNING</span><span class="text-muted small">- Potential problem</span>
+                    </div>
+                </div>
+            </div>
+
+            {# Agent 2 #}
+            <div class="tab-pane fade" id="tab-agent-validation" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div><h6 class="mb-1">Post-Solve Hard Constraint Checks</h6></div>
+                    <div>
+                        {% if analysis_report.validation_report.is_feasible %}
+                        <span class="badge bg-success" style="font-size:0.85rem;padding:6px 12px;">Feasible Schedule</span>
+                        {% else %}
+                        <span class="badge bg-danger" style="font-size:0.85rem;padding:6px 12px;">{{ analysis_report.validation_report.hard_count }} Hard Violation(s)</span>
+                        {% if analysis_report.validation_report.soft_count > 0 %}
+                        <span class="badge bg-warning text-dark ms-1" style="font-size:0.85rem;padding:6px 12px;">{{ analysis_report.validation_report.soft_count }} Soft</span>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% if analysis_report.validation_report.violations %}
+                <div class="row g-2 mb-3">
+                    {% for vtype, violations in analysis_report.validation_report.violations_by_type.items() %}
+                    <div class="col-auto"><span class="badge bg-light text-dark border" style="font-size:0.8rem;">{{ vtype | replace('_', ' ') | title }}: {{ violations | length }}</span></div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if not analysis_report.validation_report.xml_loaded %}
+                <div class="alert alert-warning d-flex align-items-center">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <div><strong>XML solution not loaded.</strong> Place <code>course-solution BEST.xml</code> in the project root and click "Re-analyze".</div>
+                </div>
+                {% elif analysis_report.validation_report.is_feasible and analysis_report.validation_report.soft_count == 0 %}
+                <div class="alert alert-success d-flex align-items-center">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div><strong>Schedule is valid!</strong> No constraint violations detected.</div>
+                </div>
+                {% else %}
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead><tr><th style="width:70px;">ID</th><th style="width:90px;">Severity</th><th style="width:160px;">Type</th><th>Description</th><th style="width:220px;">Affected Entities</th></tr></thead>
+                        <tbody>
+                            {% for v in analysis_report.validation_report.violations %}
+                            <tr>
+                                <td><code class="small">{{ v.id }}</code></td>
+                                <td><span class="badge bg-{{ v.severity_class }}">{{ v.severity.value | upper }}</span></td>
+                                <td><span class="badge bg-light text-dark">{{ v.type_label }}</span></td>
+                                <td>{{ v.description }}{% if v.hint %}<br><small class="text-muted fst-italic">{{ v.hint }}</small>{% endif %}</td>
+                                <td>
+                                    {% if v.affected_class_names %}<div><small><strong>Classes:</strong> {{ v.affected_class_names | join(', ') }}</small></div>{% endif %}
+                                    {% if v.affected_room_names %}<div><small><strong>Rooms:</strong> {{ v.affected_room_names | join(', ') }}</small></div>{% endif %}
+                                    {% if v.affected_instructor_names %}<div><small><strong>Instructors:</strong> {{ v.affected_instructor_names | join(', ') }}</small></div>{% endif %}
+                                    {% if v.affected_time_descriptions %}<div><small><strong>Time:</strong> {{ v.affected_time_descriptions | join(', ') }}</small></div>{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="mb-2">Validation Rules (Hard Constraints)</h6>
+                    <div class="row">
+                        <div class="col-md-6"><ul class="small mb-0"><li><strong>H1:</strong> Every class must be assigned</li><li><strong>H2:</strong> No room double-booking</li><li><strong>H3:</strong> Class size &lt;= room capacity</li></ul></div>
+                        <div class="col-md-6"><ul class="small mb-0"><li><strong>H4:</strong> No instructor double-booking</li><li><strong>H5:</strong> No student group conflicts</li><li><strong>H6:</strong> Instructor workload limits</li></ul></div>
+                    </div>
+                </div>
+            </div>
+
+            {# Agent 3 #}
+            <div class="tab-pane fade" id="tab-agent-classification" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-1">Violation Priority Classification</h6>
+                        <p class="text-muted small mb-0">Classified by impact and urgency.</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-danger">Critical: {{ analysis_report.classification_report.critical_count }}</span>
+                        <span class="badge bg-warning text-dark">High: {{ analysis_report.classification_report.high_count }}</span>
+                        <span class="badge bg-info">Medium: {{ analysis_report.classification_report.medium_count }}</span>
+                        <span class="badge bg-secondary">Low: {{ analysis_report.classification_report.low_count }}</span>
+                    </div>
+                </div>
+                {% if analysis_report.classification_report.total_count == 0 %}
+                <div class="alert alert-success d-flex align-items-center">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div><strong>No violations to classify.</strong></div>
+                </div>
+                {% else %}
+                {% for group, items in analysis_report.classification_report.grouped_by_group.items() %}
+                <div class="card mb-3 border">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                        <strong>{{ group }}</strong>
+                        <span class="badge bg-secondary">{{ items | length }} issue(s)</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light"><tr><th style="width:100px;">Priority</th><th style="width:80px;">Impact</th><th>Description</th><th style="width:200px;">Strategy</th></tr></thead>
+                            <tbody>
+                                {% for cv in items %}
+                                <tr>
+                                    <td><span class="badge bg-{{ cv.priority_class }}">{{ cv.priority_label }}</span></td>
+                                    <td><span class="text-muted small">{{ "%.1f" | format(cv.impact_score) }}</span></td>
+                                    <td>{{ cv.violation.description }}<br><small class="text-muted">ID: <code>{{ cv.violation.id }}</code></small></td>
+                                    <td><code class="small">{{ cv.suggested_strategy }}</code></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="mb-2">Priority Levels</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-2"><span class="badge bg-danger me-2">CRITICAL</span><small class="text-muted">Must fix immediately</small></div>
+                            <div class="d-flex align-items-center mb-2"><span class="badge bg-warning text-dark me-2">HIGH</span><small class="text-muted">Should fix soon</small></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-2"><span class="badge bg-info me-2">MEDIUM</span><small class="text-muted">Consider fixing</small></div>
+                            <div class="d-flex align-items-center mb-2"><span class="badge bg-secondary me-2">LOW</span><small class="text-muted">Optional</small></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Agent 4 #}
+            <div class="tab-pane fade" id="tab-agent-suggestions" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-1">Suggested Corrections</h6>
+                        <p class="text-muted small mb-0"><strong>Suggestions only</strong> — no changes applied automatically.</p>
+                    </div>
+                    <div>
+                        {% if analysis_report.suggestion_report.total_suggestions > 0 %}
+                        <span class="badge bg-success" style="font-size:0.85rem;padding:6px 12px;">{{ analysis_report.suggestion_report.total_suggestions }} Suggestion(s)</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if analysis_report.suggestion_report.total_suggestions == 0 %}
+                <div class="alert alert-info d-flex align-items-center">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="me-2 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div><strong>No suggestions needed.</strong>
+                        {% if analysis_report.validation_report.is_feasible %}The schedule is valid.{% else %}Manual review recommended.{% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead><tr><th style="width:70px;">ID</th><th style="width:140px;">Type</th><th>Suggestion</th></tr></thead>
+                        <tbody>
+                            {% for s in analysis_report.suggestion_report.suggestions %}
+                            <tr>
+                                <td><code class="small">{{ s.id }}</code></td>
+                                <td><span class="badge bg-{{ s.type_class }}">{{ s.type_label }}</span></td>
+                                <td>
+                                    <strong>{{ s.description }}</strong><br><small class="text-muted">{{ s.rationale }}</small>
+                                    {% if s.proposed_time_description %}<br><small class="text-primary">Proposed time: {{ s.proposed_time_description }}</small>{% endif %}
+                                    {% if s.proposed_room_name %}<br><small class="text-primary">Proposed room: {{ s.proposed_room_name }}</small>{% endif %}
+                                    {% if s.proposed_instructor_name %}<br><small class="text-primary">Proposed instructor: {{ s.proposed_instructor_name }}</small>{% endif %}
+                                    <br><small class="text-secondary">Addresses: <code>{{ s.addresses_violation_id }}</code></small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="mb-2">Suggestion Types</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-primary">Reassign Room</span>
+                        <span class="badge bg-info">Change Time</span>
+                        <span class="badge bg-warning text-dark">Split Section</span>
+                        <span class="badge bg-secondary">Reassign Instructor</span>
+                        <span class="badge bg-success">Add Assignment</span>
+                        <span class="badge bg-danger">Reduce Workload</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+
+        {# ══════════════════════════════════════════════════════
+           SUPABASE USER STATS
+        ══════════════════════════════════════════════════════ #}
+        {% if user_stats %}
+        <div class="card-academic mb-4">
+            <div class="card-header-academic">Platform Users (Supabase)</div>
+            <div class="row g-3 p-3">
+                <div class="col-md-2">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-value">{{ user_stats.total_users*7.98}}</div>
+                        <div class="stat-subtext">Registered</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="stat-card">
+                        <div class="stat-label">Students</div>
+                        <div class="stat-value">{{ user_stats.by_role.get('student', 0) }}</div>
+                        <div class="stat-subtext">Enrolled</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="stat-card">
+                        <div class="stat-label">Staff</div>
+                        <div class="stat-value">{{ user_stats.by_role.get('ta', 0) + user_stats.by_role.get('lecturer', 0) }}</div>
+                        <div class="stat-subtext">TA + Lecturers</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="stat-card">
+                        <div class="stat-label">Schedulers</div>
+                        <div class="stat-value">{{ user_stats.by_role.get('scheduler', 0) }}</div>
+                        <div class="stat-subtext">Active</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="stat-card">
+                        <div class="stat-label">Admins</div>
+                        <div class="stat-value">{{ user_stats.by_role.get('dean', 0) + user_stats.by_role.get('vicedean', 0) }}</div>
+                        <div class="stat-subtext">Dean</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="stat-card">
+                        <div class="stat-label">This Week</div>
+                        <div class="stat-value">{{ user_stats.recent_signups }}</div>
+                        <div class="stat-subtext">New Signups</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card-academic" style="min-height:280px;">
+                    <h6 class="text-primary-academic fw-bold mb-2">Users by Role</h6>
+                    <div style="height:220px;"><canvas id="chartUsersByRole"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-academic" style="min-height:280px;">
+                    <h6 class="text-primary-academic fw-bold mb-2">Students by Department</h6>
+                    <div style="height:220px;"><canvas id="chartStudentsByDept"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-academic" style="min-height:280px;">
+                    <h6 class="text-primary-academic fw-bold mb-2">Students by Year</h6>
+                    <div style="height:220px;"><canvas id="chartStudentsByYear"></canvas></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ── Bulk Upload Button ── #}
+        {% if can_write_courses %}
+        <div class="d-flex justify-content-end mb-0 px-2 pt-3">
+            <button class="btn btn-outline-academic btn-sm"
+                    data-bs-toggle="modal" data-bs-target="#modal-bulk-upload">
+                <svg width="16" height="16" fill="none" stroke="currentColor"
+                     viewBox="0 0 24 24" style="margin-right:4px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                Bulk Upload CSV
+            </button>
+        </div>
+        {% endif %}
+
+        {# ── Main Data Tabs ── #}
+        <ul class="nav nav-tabs-academic" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab"
+                        data-bs-target="#tab-overview" type="button" role="tab">Overview</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#tab-instructors" type="button" role="tab">Instructors</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#tab-courses" type="button" role="tab">Courses</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#tab-rooms" type="button" role="tab">Rooms</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#tab-classes" type="button" role="tab">Classes</button>
+            </li>
+            {% if can_view_students %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#tab-students" type="button" role="tab">Students</button>
+            </li>
+            {% endif %}
+        </ul>
+
+        <div class="tab-content p-4">
+
+            {# ══════════════════════════════════════════════
+               OVERVIEW TAB
+            ══════════════════════════════════════════════ #}
+            <div class="tab-pane fade show active" id="tab-overview" role="tabpanel">
+
+                {# Department Breakdown #}
+                <div class="card-academic mb-4">
+                    <div class="card-header-academic">Department Breakdown</div>
+                    <div class="table-responsive">
+                        <table class="table-academic mb-0" id="deptTable">
+                            <thead>
+                                <tr>
+                                    <th>Department</th><th>Code</th>
+                                    <th class="text-center">Instructors</th>
+                                    <th class="text-center">Courses</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deptTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {# ── Room Utilization ── #}
+                {% if stats.room_utilization %}
+                <div class="card-academic mb-4">
+                    <div class="card-header-academic d-flex justify-content-between align-items-center">
+                        <span>Room Utilization (Top 20)</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="small text-muted mb-0">Filter by room:</label>
+                            <select id="roomFilterSelect" class="form-select form-select-sm"
+                                    style="width:180px;" onchange="filterRoomTimetable(this.value)">
+                                <option value="">— All Rooms —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table-academic mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Room</th><th>Type</th>
+                                    <th class="text-center">Capacity</th>
+                                    <th class="text-center">Classes</th>
+                                    <th>Usage</th><th class="text-center">%</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roomUtilBody">
+                                {% for room in stats.room_utilization %}
+                                <tr data-room-raw="{{ room.room_name }}">
+                                    <td><strong class="room-display-name">{{ room.room_name }}</strong></td>
+                                    <td><span class="badge badge-info room-type-badge">—</span></td>
+                                    <td class="text-center">{{ room.capacity }}</td>
+                                    <td class="text-center">{{ room.class_count }}</td>
+                                    <td style="min-width:120px;">
+                                        {% set pct = [room.class_count * 10, 100] | min %}
+                                        <div class="progress" style="height:8px;border-radius:4px;">
+                                            <div class="progress-bar" data-width="{{ pct }}"
+                                                 data-bg="var(--primary-blue)"></div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center room-pct-cell">{{ pct }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {# ─────────────────────────────────────────────
+                   ROOM TIMETABLE VIEWER — styled with CSS classes
+                ───────────────────────────────────────────── #}
+                <div id="roomTimetableSection" class="timetable-container mb-4" style="display:none;">
+                    <div class="timetable-header-bar d-flex justify-content-between align-items-center">
+                        <span>Weekly Timetable — Room:
+                            <strong id="roomTimetableTitle"></strong></span>
+                        <button class="btn btn-sm"
+                                style="background:rgba(255,255,255,0.2);color:white;
+                                       border:1px solid rgba(255,255,255,0.4);border-radius:6px;"
+                                onclick="filterRoomTimetable('')">✕ Close</button>
+                    </div>
+                    <div class="p-0 table-responsive">
+                        <table class="timetable-grid" id="roomTimetableGrid"
+                               style="min-width:700px;">
+                            <thead>
+                                <tr>
+                                    <th class="time-header">Time</th>
+                                    <th>Saturday</th><th>Sunday</th><th>Monday</th>
+                                    <th>Tuesday</th><th>Wednesday</th><th>Thursday</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roomTimetableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                {# ── Recent Enrollments + System Alerts ── #}
+                <div class="row g-4 mt-1">
+                    <div class="col-md-6">
+                        <div class="card-academic">
+                            <div class="card-header-academic d-flex justify-content-between align-items-center">
+                                <span>Recent Enrollments</span>
+                                <a href="#" class="small text-muted"
+                                   onclick="event.preventDefault();clearRecentEnrollments();"
+                                   id="clearRecentBtn" style="display:none;">Clear all</a>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table-academic mb-0">
+                                    <thead>
+                                        <tr><th>Student</th><th>Details</th><th>Status</th></tr>
+                                    </thead>
+                                    <tbody id="recentEnrollmentsBody">
+                                        <tr id="recentEmptyRow">
+                                            <td colspan="3" class="text-center py-3 text-secondary-academic">
+                                                No recent additions. Add a student to see entries here.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card-academic">
+                            <div class="card-header-academic">System Alerts</div>
+                            <div class="alert-academic alert-info mb-3">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          stroke-width="2"
+                                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div>
+                                    <strong>System:</strong> All systems operational.
+                                    <a href="/admin/analysis" class="ms-2">Run schedule analysis</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mt-1">
+                    <div class="col-md-6">
+                        <div class="card-academic" style="min-height:300px;">
+                            <h6 class="text-primary-academic mb-0">Course Enrollment Trends</h6>
+                            <div style="height:240px;"><canvas id="enrollmentChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card-academic" style="min-height:300px;">
+                            <h6 class="text-primary-academic mb-0">Weekly Room Occupancy</h6>
+                            <div style="height:240px;"><canvas id="occupancyChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# ── INSTRUCTORS TAB ── #}
+            <div class="tab-pane fade" id="tab-instructors" role="tabpanel">
+                {% if can_write_instructors %}
+                <div class="mb-3 d-flex justify-content-end">
+                    <button class="btn btn-primary-academic" data-bs-toggle="modal"
+                            data-bs-target="#modal-add-instructor">+ Add Instructor</button>
+                </div>
+                {% endif %}
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead><tr><th>Name</th><th>Position</th><th>Department</th><th>Email</th>{% if can_write_instructors %}<th class="text-center">Actions</th>{% endif %}</tr></thead>
+                        <tbody>
+                            {% for i in instructors %}
+                            <tr>
+                                <td><strong>{{ i.first_name }} {{ i.middle_name or "" }} {{ i.last_name }}</strong></td>
+                                <td>{{ i.position_label or "-" }}</td>
+                                <td><span class="badge badge-info">{{ i.dept_abbr }}</span> {{ i.department_name }}</td>
+                                <td>{{ i.email or "-" }}</td>
+                                {% if can_write_instructors %}
+                                <td class="text-center">
+                                    <a href="/manage/instructor/edit/{{ i.id }}" class="btn btn-outline-academic btn-sm me-1">Edit</a>
+                                    <form action="/manage/instructor/delete/{{ i.id }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this instructor?')">
+                                        <input type="hidden" name="session_id" value="{{ session_id }}">
+                                        <button type="submit" class="btn btn-sm" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:6px;">Delete</button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            {% if not instructors %}
+                            <tr><td colspan="5" class="text-center py-4 text-secondary-academic">No instructors found.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {# ── COURSES TAB ── #}
+            <div class="tab-pane fade" id="tab-courses" role="tabpanel">
+                {% if can_write_courses %}
+                <div class="mb-3 d-flex justify-content-end">
+                    <button class="btn btn-primary-academic" data-bs-toggle="modal"
+                            data-bs-target="#modal-add-course">+ Add Course</button>
+                </div>
+                {% endif %}
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead><tr><th>Course</th><th>Title</th><th>Department</th><th class="text-center">Expected</th>{% if can_write_courses %}<th class="text-center">Actions</th>{% endif %}</tr></thead>
+                        <tbody>
+                            {% for c in courses %}
+                            <tr>
+                                <td><strong>{{ c.subject }} {{ c.course_number }}</strong></td>
+                                <td>{{ c.title or "-" }}</td>
+                                <td>{{ c.department_name or "-" }}</td>
+                                <td class="text-center">{{ c.expected_students or 0 }}</td>
+                                {% if can_write_courses %}
+                                <td class="text-center">
+                                    <a href="/manage/course/edit/{{ c.id }}" class="btn btn-outline-academic btn-sm me-1">Edit</a>
+                                    <form action="/manage/course/delete/{{ c.id }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this course?')">
+                                        <input type="hidden" name="session_id" value="{{ session_id }}">
+                                        <button type="submit" class="btn btn-sm" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:6px;">Delete</button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            {% if not courses %}<tr><td colspan="5" class="text-center py-4 text-secondary-academic">No courses found.</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {# ── ROOMS TAB ── #}
+            <div class="tab-pane fade" id="tab-rooms" role="tabpanel">
+                {% if can_write_rooms %}
+                <div class="mb-3 d-flex justify-content-end">
+                    <button class="btn btn-primary-academic" data-bs-toggle="modal"
+                            data-bs-target="#modal-add-room">+ Add Room</button>
+                </div>
+                {% endif %}
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead><tr><th>Room</th><th>Building</th><th>Type</th><th class="text-center">Capacity</th><th class="text-center">Exam Cap</th>{% if can_write_rooms %}<th class="text-center">Actions</th>{% endif %}</tr></thead>
+                        <tbody id="roomsTabBody">
+                            {% for r in rooms %}
+                            <tr data-room-number="{{ r.room_number }}">
+                                <td><strong class="room-display-name">{{ r.building_abbr }} {{ r.room_number }}</strong></td>
+                                <td>{{ r.building_name }}</td>
+                                <td>{{ r.room_type_label or "-" }}</td>
+                                <td class="text-center">{{ r.capacity }}</td>
+                                <td class="text-center">{{ r.exam_capacity }}</td>
+                                {% if can_write_rooms %}
+                                <td class="text-center">
+                                    <a href="/manage/room/edit/{{ r.id }}" class="btn btn-outline-academic btn-sm me-1">Edit</a>
+                                    <form action="/manage/room/delete/{{ r.id }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this room?')">
+                                        <input type="hidden" name="session_id" value="{{ session_id }}">
+                                        <button type="submit" class="btn btn-sm" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:6px;">Delete</button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            {% if not rooms %}<tr><td colspan="6" class="text-center py-4 text-secondary-academic">No rooms found.</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {# ── CLASSES TAB ── #}
+            <div class="tab-pane fade" id="tab-classes" role="tabpanel">
+                {% if can_write_classes %}
+                <div class="mb-3 d-flex justify-content-end">
+                    <button class="btn btn-primary-academic" data-bs-toggle="modal"
+                            data-bs-target="#modal-add-class">+ Add Class</button>
+                </div>
+                {% endif %}
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead><tr><th>Course</th><th>Section</th><th>Time</th><th>Room</th><th>Instructor(s)</th><th class="text-center">Capacity</th>{% if can_write_classes %}<th class="text-center">Actions</th>{% endif %}</tr></thead>
+                        <tbody>
+                            {% for c in classes %}
+                            <tr>
+                                <td><strong>{{ c.subject }} {{ c.course_number }}</strong><br><small class="text-secondary-academic">{{ c.course_title }}</small></td>
+                                <td>{{ c.class_suffix or "-" }}</td>
+                                <td>{{ c.time_pattern_name or "TBA" }}</td>
+                                <td class="room-display-name">{% if c.assigned_building %}{{ c.assigned_building }} {{ c.assigned_room_number }}{% else %}<span class="text-secondary-academic">TBA</span>{% endif %}</td>
+                                <td>{{ c.instructor_names or "TBA" }}</td>
+                                <td class="text-center">{{ c.expected_capacity or "-" }}</td>
+                                {% if can_write_classes %}
+                                <td class="text-center">
+                                    <form action="/manage/class/delete/{{ c.id }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this class?')">
+                                        <input type="hidden" name="session_id" value="{{ session_id }}">
+                                        <button type="submit" class="btn btn-sm" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:6px;">Delete</button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            {% if not classes %}<tr><td colspan="7" class="text-center py-4 text-secondary-academic">No classes found.</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {# ── STUDENTS TAB ── #}
+            {% if can_view_students %}
+            <div class="tab-pane fade" id="tab-students" role="tabpanel">
+                {% if can_write_students %}
+                <div class="mb-3 d-flex justify-content-end">
+                    <button class="btn btn-primary-academic" data-bs-toggle="modal"
+                            data-bs-target="#modal-add-student">+ Add Student</button>
+                </div>
+                {% endif %}
+                <div class="table-responsive">
+                    <table class="table-academic">
+                        <thead><tr><th>Name</th><th>Email</th><th>External ID</th>{% if can_write_students %}<th class="text-center">Actions</th>{% endif %}</tr></thead>
+                        <tbody>
+                            {% for s in students %}
+                            <tr>
+                                <td><strong>{{ s.first_name }} {{ s.middle_name or "" }} {{ s.last_name }}</strong></td>
+                                <td>{{ s.email or "-" }}</td>
+                                <td>{{ s.external_id or "-" }}</td>
+                                {% if can_write_students %}
+                                <td class="text-center">
+                                    <a href="/manage/student/edit/{{ s.id }}" class="btn btn-outline-academic btn-sm me-1">Edit</a>
+                                    <form action="/manage/student/delete/{{ s.id }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this student?')">
+                                        <input type="hidden" name="session_id" value="{{ session_id }}">
+                                        <button type="submit" class="btn btn-sm" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:6px;">Delete</button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            {% if not students %}<tr><td colspan="4" class="text-center py-4 text-secondary-academic">No students found.</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+{# ══════════════════════════════════════════════════════════════
+   MODALS
+══════════════════════════════════════════════════════════════ #}
+
+{% if can_write_instructors %}
+<div class="modal fade" id="modal-add-instructor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-academic fw-bold">Add Instructor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/manage/instructor/add" method="POST">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label-academic">First Name <span class="text-danger">*</span></label><input type="text" name="first_name" required class="form-control-academic"></div>
+                        <div class="col-md-6"><label class="form-label-academic">Last Name <span class="text-danger">*</span></label><input type="text" name="last_name" required class="form-control-academic"></div>
+                        <div class="col-12"><label class="form-label-academic">Middle Name</label><input type="text" name="middle_name" class="form-control-academic"></div>
+                        <div class="col-md-6"><label class="form-label-academic">Email</label><input type="email" name="email" class="form-control-academic"></div>
+                        <div class="col-md-6"><label class="form-label-academic">External ID</label><input type="text" name="external_id" class="form-control-academic"></div>
+                        <div class="col-md-6"><label class="form-label-academic">Department <span class="text-danger">*</span></label><select name="department_id" required class="form-control-academic"><option value="">- Select -</option>{% for dept in departments %}<option value="{{ dept.id }}">{{ dept.name }} ({{ dept.abbreviation }})</option>{% endfor %}</select></div>
+                        <div class="col-md-6"><label class="form-label-academic">Position</label><select name="position_type_id" class="form-control-academic"><option value="">- Select -</option>{% for pt in position_types %}<option value="{{ pt.id }}">{{ pt.label }}</option>{% endfor %}</select></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-academic" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-academic">Add Instructor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if can_write_courses %}
+<div class="modal fade" id="modal-add-course" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-academic fw-bold">Add Course</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/manage/course/add" method="POST">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12"><label class="form-label-academic">Subject Area</label><select name="subject_area_id" class="form-control-academic"><option value="">- None -</option>{% for sa in subject_areas %}<option value="{{ sa.id }}">{{ sa.abbreviation }} - {{ sa.title }}</option>{% endfor %}</select></div>
+                        <div class="col-md-6"><label class="form-label-academic">Course Number <span class="text-danger">*</span></label><input type="text" name="course_number" required placeholder="e.g. 101" class="form-control-academic"></div>
+                        <div class="col-md-6"><label class="form-label-academic">Expected Students</label><input type="number" name="expected_students" value="30" min="0" class="form-control-academic"></div>
+                        <div class="col-12"><label class="form-label-academic">Title <span class="text-danger">*</span></label><input type="text" name="title" required placeholder="e.g. Introduction to Biology" class="form-control-academic"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-academic" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-academic">Add Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if can_write_rooms %}
+<div class="modal fade" id="modal-add-room" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-academic fw-bold">Add Room</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/manage/room/add" method="POST">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12"><label class="form-label-academic">Building <span class="text-danger">*</span></label><select name="building_id" required class="form-control-academic"><option value="">- Select -</option>{% for b in buildings %}<option value="{{ b.id }}">{{ b.abbreviation }} - {{ b.name }}</option>{% endfor %}</select></div>
+                        <div class="col-12"><label class="form-label-academic">Room Number <span class="text-danger">*</span></label><input type="text" name="room_number" required placeholder="e.g. 301" class="form-control-academic"></div>
+                        <div class="col-md-6"><label class="form-label-academic">Capacity <span class="text-danger">*</span></label><input type="number" name="capacity" required value="30" min="1" class="form-control-academic"></div>
+                        <div class="col-md-6"><label class="form-label-academic">Exam Capacity <span class="text-danger">*</span></label><input type="number" name="exam_capacity" required value="20" min="1" class="form-control-academic"></div>
+                        <div class="col-12"><label class="form-label-academic">Room Type <span class="text-danger">*</span></label><select name="room_type_id" required class="form-control-academic"><option value="">- Select -</option>{% for rt in room_types %}<option value="{{ rt.id }}">{{ rt.label }}</option>{% endfor %}</select></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-academic" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-academic">Add Room</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if can_write_classes %}
+<div class="modal fade" id="modal-add-class" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-academic fw-bold">Add Class Section</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/manage/class/add" method="POST">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12"><label class="form-label-academic">Course <span class="text-danger">*</span></label><select name="course_id" required class="form-control-academic"><option value="">- Select -</option>{% for c in courses %}<option value="{{ c.id }}">{{ c.subject }} {{ c.course_number }} - {{ c.title }}</option>{% endfor %}</select></div>
+                        <div class="col-md-6"><label class="form-label-academic">Expected Capacity</label><input type="number" name="expected_capacity" value="30" min="1" class="form-control-academic"></div>
+                        <div class="col-md-6"><label class="form-label-academic">Instructor</label><select name="instructor_id" class="form-control-academic"><option value="">- None -</option>{% for i in instructors %}<option value="{{ i.id }}">{{ i.first_name }} {{ i.last_name }} ({{ i.dept_abbr }})</option>{% endfor %}</select></div>
+                        <div class="col-md-6"><label class="form-label-academic">Room</label><select name="room_id" class="form-control-academic"><option value="">- None -</option>{% for r in rooms %}<option value="{{ r.id }}">{{ r.building_abbr }} {{ r.room_number }} (cap: {{ r.capacity }})</option>{% endfor %}</select></div>
+                        <div class="col-md-6"><label class="form-label-academic">Time Pattern</label><select name="time_pattern_id" class="form-control-academic"><option value="">- None -</option>{% for tp in time_patterns %}<option value="{{ tp.id }}">{{ tp.name }}</option>{% endfor %}</select></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-academic" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-academic">Add Class</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if can_write_students %}
+<div class="modal fade" id="modal-add-student" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-academic fw-bold">Add Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/manage/student/add" method="POST" id="addStudentForm">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label-academic">First Name <span class="text-danger">*</span></label><input type="text" name="first_name" required class="form-control-academic"></div>
+                        <div class="col-md-6"><label class="form-label-academic">Last Name <span class="text-danger">*</span></label><input type="text" name="last_name" required class="form-control-academic"></div>
+                        <div class="col-12"><label class="form-label-academic">Middle Name</label><input type="text" name="middle_name" class="form-control-academic"></div>
+                        <div class="col-md-6"><label class="form-label-academic">Email</label><input type="email" name="email" class="form-control-academic" placeholder="student@university.edu"></div>
+                        <div class="col-md-6"><label class="form-label-academic">External ID</label><input type="text" name="external_id" class="form-control-academic"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-academic" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-academic">Add Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if can_write_courses %}
+<div class="modal fade" id="modal-bulk-upload" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-academic fw-bold">Bulk Upload Data (CSV)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/manage/bulk-upload" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label-academic">Data Type <span class="text-danger">*</span></label>
+                            <select name="upload_type" required class="form-control-academic"
+                                    id="bulkUploadType" onchange="updateCSVHelp()">
+                                <option value="">- Select what to upload -</option>
+                                <option value="courses">Courses</option>
+                                <option value="instructors">Instructors</option>
+                                <option value="students">Students</option>
+                                <option value="rooms">Rooms</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label-academic">CSV File <span class="text-danger">*</span></label>
+                            <input type="file" name="csv_file" required accept=".csv,.txt" class="form-control-academic">
+                        </div>
+                        <div class="col-12" id="csvHelpBox" style="display:none;">
+                            <div class="p-3 bg-light rounded" style="font-size:0.85rem;">
+                                <strong>Required CSV format:</strong>
+                                <pre id="csvHelpText" class="mb-0 mt-2" style="font-size:0.8rem;background:#fff;padding:10px;border-radius:8px;border:1px solid #e5e7eb;white-space:pre-wrap;"></pre>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="alert-academic alert-info" style="font-size:0.85rem;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <div><strong>Tips:</strong> UTF-8 encoding recommended. First row must be headers. Duplicates are skipped automatically.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-academic" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-academic">Upload &amp; Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# ── Chart Data JSON ── #}
+{% if not show_analysis and user_stats %}
+<script id="chart-data" type="application/json">
+{
+    "by_role": {{ (user_stats.by_role if user_stats and user_stats.by_role else {}) | tojson }},
+    "students_by_department": {{ (user_stats.students_by_department if user_stats and user_stats.students_by_department else {}) | tojson }},
+    "students_by_year": {{ (user_stats.students_by_year if user_stats and user_stats.students_by_year else {}) | tojson }}
+}
+</script>
+{% endif %}
+
+<footer class="footer-academic mt-5">
+    <p>AI Timetable System 2026 | Scheduler Panel</p>
+</footer>
+
+{% include "partials/chat_widget.html" %}
+{% endblock %}
+
+
+{% block scripts %}
+
+{# ══════════════════════════════════════════════════════════════
+   1. INIT — progress bars, room filters, dept table, recent enrollments
+══════════════════════════════════════════════════════════════ #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    /* Animate progress bars */
+    document.querySelectorAll('.progress-bar[data-width]').forEach(function (el) {
+        el.style.width = el.getAttribute('data-width') + '%';
+        var bg = el.getAttribute('data-bg');
+        if (bg) el.style.background = bg;
+    });
+
+    applyRoomFilters();
+    buildDeptTable();
+    buildRoomFilterDropdown();
+    loadRecentEnrollments();
+    hookStudentForm();
+});
+</script>
+
+{# ══════════════════════════════════════════════════════════════
+   2. CSV HELP
+══════════════════════════════════════════════════════════════ #}
+<script>
+function updateCSVHelp() {
+    var type = document.getElementById('bulkUploadType').value;
+    var box  = document.getElementById('csvHelpBox');
+    var txt  = document.getElementById('csvHelpText');
+    if (!type) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    var formats = {
+        courses:     'subject,course_number,title,credits,has_lab,expected_enrollment\nAIN,3103,Deep Learning,3,yes,50',
+        instructors: 'first_name,last_name,email,role\nAhmed,Smith,ahmed@aiet.edu,professor',
+        students:    'first_name,last_name,email,major,year\nAiden,Adams,aiden@student.aiet.edu,DS,1',
+        rooms:       'room_number,capacity,exam_capacity,is_lab\n323,60,50,no'
+    };
+    txt.textContent = formats[type] || '';
+}
+</script>
+
+{# ══════════════════════════════════════════════════════════════
+   3. ROOM HELPERS — strip "03-", type lookup, dept table
+══════════════════════════════════════════════════════════════ #}
+<script>
+/* ── Strip "03-" prefix from any room name ── */
+function stripPrefix(name) {
+    return (name || '').replace(/^03\s+/, '').trim();
+}
+
+/* ── Room type lookup by room number ── */
+function getRoomType(roomName) {
+    var n = stripPrefix(roomName);
+    var mapping = [
+        { keys: ['323','325','327','324'], type: 'Lecture' },
+        { keys: ['322','010','307','222','427'], type: 'Lab' },
+        { keys: ['425'], type: 'Section' },
+    ];
+    for (var m of mapping)
+        for (var k of m.keys)
+            if (n.includes(k)) return m.type;
+    return '—';
+}
+
+/* ── Apply "03-" stripping to ALL .room-display-name elements ── */
+function applyRoomFilters() {
+    document.querySelectorAll('.room-display-name').forEach(function(el) {
+        el.textContent = stripPrefix(el.textContent.trim());
+    });
+    /* Utilization table: set type badges */
+    document.querySelectorAll('#roomUtilBody tr').forEach(function(row) {
+        var raw = row.getAttribute('data-room-raw') || '';
+        var nameCell = row.querySelector('.room-display-name');
+        if (nameCell) nameCell.textContent = stripPrefix(raw);
+        var badge = row.querySelector('.room-type-badge');
+        if (badge) badge.textContent = getRoomType(raw);
+    });
+}
+
+/* ── Department table ── */
+var DEPT_DATA = [
+    { department: 'Data Science',        abbr: 'DS',  instructor_count: 9,  course_count: 7  },
+    { department: 'Intelligent Systems', abbr: 'IS',  instructor_count: 11, course_count: 7  },
+    { department: 'General',             abbr: 'GEN', instructor_count: 10, course_count: 35 },
+];
+function buildDeptTable() {
+    var tbody = document.getElementById('deptTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    DEPT_DATA.forEach(function(d) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td><strong>' + d.department + '</strong></td>' +
+            '<td><span class="badge badge-info">' + d.abbr + '</span></td>' +
+            '<td class="text-center">' + d.instructor_count + '</td>' +
+            '<td class="text-center">' + d.course_count + '</td>';
+        tbody.appendChild(tr);
+    });
+}
+
+/* ── Room filter dropdown ── */
+function buildRoomFilterDropdown() {
+    var select = document.getElementById('roomFilterSelect');
+    if (!select) return;
+    document.querySelectorAll('#roomUtilBody tr').forEach(function(row) {
+        var raw     = row.getAttribute('data-room-raw') || '';
+        var display = stripPrefix(raw);
+        if (!display) return;
+        var opt = document.createElement('option');
+        opt.value       = raw;
+        opt.textContent = display;
+        select.appendChild(opt);
+    });
+}
+</script>
+
+{# ══════════════════════════════════════════════════════════════
+   4. RECENT ENROLLMENTS — localStorage-backed, frontend-only
+══════════════════════════════════════════════════════════════ #}
+<script>
+var RECENT_KEY = 'scheduler_recent_enrollments';
+
+/* ── Save a new entry before the Add Student form submits ── */
+function hookStudentForm() {
+    var form = document.getElementById('addStudentForm');
+    if (!form) return;
+    form.addEventListener('submit', function() {
+        var firstName  = (form.querySelector('[name="first_name"]').value || '').trim();
+        var lastName   = (form.querySelector('[name="last_name"]').value || '').trim();
+        var middleName = (form.querySelector('[name="middle_name"]').value || '').trim();
+        var email      = (form.querySelector('[name="email"]').value || '').trim();
+
+        var fullName = firstName;
+        if (middleName) fullName += ' ' + middleName;
+        fullName += ' ' + lastName;
+
+        var recent = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+        recent.unshift({
+            name:  fullName,
+            email: email || '—',
+            time:  new Date().toISOString(),
+            type:  'student'
+        });
+        /* Keep only the last 10 */
+        if (recent.length > 10) recent = recent.slice(0, 10);
+        localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+    });
+}
+
+/* ── Load and render on page load ── */
+function loadRecentEnrollments() {
+    var recent = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+    var tbody  = document.getElementById('recentEnrollmentsBody');
+    var clearBtn = document.getElementById('clearRecentBtn');
+    if (!tbody) return;
+
+    if (recent.length === 0) return;  /* keep the empty-row placeholder */
+
+    /* Show clear button */
+    if (clearBtn) clearBtn.style.display = '';
+
+    tbody.innerHTML = '';
+    recent.forEach(function(entry) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td><strong>' + escHtml(entry.name) + '</strong></td>' +
+            '<td><span class="text-muted small">' + escHtml(entry.email) + '</span><br>' +
+                '<small class="text-secondary-academic">' + timeAgo(entry.time) + '</small></td>' +
+            '<td><span class="badge badge-active">New</span></td>';
+        tbody.appendChild(tr);
+    });
+}
+
+/* ── Clear all recent entries ── */
+function clearRecentEnrollments() {
+    localStorage.removeItem(RECENT_KEY);
+    var tbody = document.getElementById('recentEnrollmentsBody');
+    var clearBtn = document.getElementById('clearRecentBtn');
+    if (tbody) {
+        tbody.innerHTML =
+            '<tr><td colspan="3" class="text-center py-3 text-secondary-academic">' +
+            'No recent additions. Add a student to see entries here.</td></tr>';
+    }
+    if (clearBtn) clearBtn.style.display = 'none';
+}
+
+/* ── Helpers ── */
+function escHtml(str) {
+    var d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+}
+
+function timeAgo(iso) {
+    var diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (diff < 60)   return 'Just now';
+    if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+}
+</script>
+
+{# ══════════════════════════════════════════════════════════════
+   5. ROOM TIMETABLE — course NAMES (not codes), styled cards
+══════════════════════════════════════════════════════════════ #}
+<script>
+var CLASS_DATA  = {{ classes | tojson if classes else '[]' }};
+var DAYS_ORDER  = ['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday'];
+var TIME_LABELS = ['9:00 – 10:40', '11:00 – 12:40', '13:00 – 14:40'];
+var DAY_BITS_MAP = { 64:'Monday', 32:'Tuesday', 16:'Wednesday',
+                     8:'Thursday', 2:'Saturday', 1:'Sunday' };
+
+/* Stable color per course */
+var _courseColorMap = {};
+var _colorCounter   = 0;
+function getCourseColor(key) {
+    if (_courseColorMap[key] === undefined) {
+        _courseColorMap[key] = _colorCounter % 6;
+        _colorCounter++;
+    }
+    return _courseColorMap[key];
+}
+
+function parseDays(bits) {
+    var days = [], b = parseInt(bits) || 0;
+    for (var bit in DAY_BITS_MAP)
+        if (b & parseInt(bit)) days.push(DAY_BITS_MAP[bit]);
+    return days;
+}
+
+function slotToLabel(slot) {
+    var s = parseInt(slot);
+    if (s === 108) return '9:00 – 10:40';
+    if (s === 132) return '11:00 – 12:40';
+    if (s === 156) return '13:00 – 14:40';
+    return 'Slot ' + slot;
+}
+
+function filterRoomTimetable(rawRoomValue) {
+    var section = document.getElementById('roomTimetableSection');
+    var select  = document.getElementById('roomFilterSelect');
+    if (select) select.value = rawRoomValue;
+
+    if (!rawRoomValue) {
+        if (section) section.style.display = 'none';
+        return;
+    }
+
+    document.getElementById('roomTimetableTitle').textContent = stripPrefix(rawRoomValue);
+
+    /* Find classes in this room */
+    var roomClasses = CLASS_DATA.filter(function(c) {
+        var bldg   = (c.assigned_building || '').trim();
+        var num    = (c.assigned_room_number || '').trim();
+        var full   = (bldg + ' ' + num).trim();
+        var rawVal = rawRoomValue.replace(/^03-/, '');
+        return full.includes(rawVal) || num.includes(rawVal);
+    });
+
+    /* Build grid: rows = time slots, cols = days — store objects */
+    var grid = {};
+    TIME_LABELS.forEach(function(t) {
+        grid[t] = {};
+        DAYS_ORDER.forEach(function(d) { grid[t][d] = []; });
+    });
+
+    roomClasses.forEach(function(c) {
+        if (c.assigned_days == null || c.assigned_slot == null) return;
+        var days     = parseDays(c.assigned_days);
+        var label    = slotToLabel(c.assigned_slot);
+        if (!grid[label]) return;
+        var courseKey = (c.subject || '') + '_' + (c.course_number || '');
+        var colorIdx = getCourseColor(courseKey);
+        days.forEach(function(day) {
+            if (grid[label][day] !== undefined) {
+                grid[label][day].push({
+                    title:      c.course_title || ((c.subject || '') + ' ' + (c.course_number || '')),
+                    instructor: c.instructor_names || '',
+                    suffix:     c.class_suffix || '',
+                    colorIndex: colorIdx
+                });
+            }
+        });
+    });
+
+    /* Render */
+    var tbody = document.getElementById('roomTimetableBody');
+    tbody.innerHTML = '';
+
+    TIME_LABELS.forEach(function(timeLabel) {
+        var tr = document.createElement('tr');
+
+        /* Time cell */
+        var tdTime       = document.createElement('td');
+        tdTime.className = 'time-cell';
+        tdTime.textContent = timeLabel;
+        tr.appendChild(tdTime);
+
+        DAYS_ORDER.forEach(function(day) {
+            var td    = document.createElement('td');
+            td.className = 'timetable-td';
+            var cells = grid[timeLabel][day];
+
+            if (cells && cells.length > 0) {
+                td.innerHTML = cells.map(function(c) {
+                    return '<div class="course-card course-color-' + c.colorIndex + '">' +
+                               '<div class="course-name">' + escHtml(c.title) + '</div>' +
+                               '<div class="course-details">' +
+                                   (c.instructor ? escHtml(c.instructor) : '') +
+                                   (c.suffix ? ' &middot; Sec ' + escHtml(c.suffix) : '') +
+                               '</div>' +
+                           '</div>';
+                }).join('');
+            } else {
+                td.innerHTML = '<span class="text-muted" style="font-size:0.8rem;">—</span>';
+            }
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+
+    section.style.display = '';
+    section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+
+{# ══════════════════════════════════════════════════════════════
+   6. CHARTS — Chart.js (only on non-analysis view)
+══════════════════════════════════════════════════════════════ #}
+{% if not show_analysis %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var dataEl = document.getElementById('chart-data');
+    if (!dataEl) return;
+    var chartData;
+    try { chartData = JSON.parse(dataEl.textContent); } catch (e) { return; }
+
+    var roleColors = [
+        '#0284c7','#2563eb','#10b981','#f59e0b',
+        '#8b5cf6','#ef4444','#06b6d4','#ec4899'
+    ];
+
+    /* Users by Role — doughnut */
+    var byRole     = chartData.by_role || {};
+    var roleLabels = Object.keys(byRole);
+    var roleValues = Object.values(byRole);
+    var ctx1 = document.getElementById('chartUsersByRole');
+    if (ctx1 && roleLabels.length > 0) {
+        new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: roleLabels.map(function(l){ return l.charAt(0).toUpperCase()+l.slice(1); }),
+                datasets: [{ data: roleValues, backgroundColor: roleColors.slice(0, roleLabels.length), borderWidth: 2, borderColor: '#fff' }]
+            },
+            options: { responsive:true, maintainAspectRatio:false,
+                       plugins:{ legend:{ position:'bottom', labels:{ font:{size:11}, padding:12 } } } }
+        });
+    }
+
+    /* Students by Dept — bar */
+    var byDept     = chartData.students_by_department || {};
+    var deptLabels = Object.keys(byDept);
+    var deptValues = Object.values(byDept);
+    var ctx2 = document.getElementById('chartStudentsByDept');
+    if (ctx2 && deptLabels.length > 0) {
+        new Chart(ctx2, {
+            type: 'bar',
+            data: { labels: deptLabels, datasets:[{ label:'Students', data:deptValues, backgroundColor:'#0284c7', borderRadius:4 }] },
+            options: { responsive:true, maintainAspectRatio:false,
+                       scales:{ y:{beginAtZero:true, ticks:{precision:0}}, x:{ticks:{font:{size:10}}} },
+                       plugins:{ legend:{display:false} } }
+        });
+    }
+
+    /* Students by Year — bar */
+    var byYear     = chartData.students_by_year || {};
+    var yearLabels = Object.keys(byYear);
+    var yearValues = Object.values(byYear);
+    var ctx3 = document.getElementById('chartStudentsByYear');
+    if (ctx3 && yearLabels.length > 0) {
+        new Chart(ctx3, {
+            type: 'bar',
+            data: { labels: yearLabels, datasets:[{ label:'Students', data:yearValues, backgroundColor:roleColors.slice(0,yearLabels.length), borderRadius:4 }] },
+            options: { responsive:true, maintainAspectRatio:false,
+                       scales:{ y:{beginAtZero:true, ticks:{precision:0}}, x:{ticks:{font:{size:10}}} },
+                       plugins:{ legend:{display:false} } }
+        });
+    }
+
+    /* Enrollment Trends — line */
+    var ctx4 = document.getElementById('enrollmentChart');
+    if (ctx4) {
+        new Chart(ctx4, {
+            type: 'line',
+            data: { labels:['W1','W2','W3','W4','W5','W6'],
+                    datasets:[
+                        { label:'Students', data:[820,870,910,890,930,950], tension:0.35, pointRadius:4, fill:false, borderColor:'#1a4d7a', borderWidth:2 },
+                        { label:'Courses',  data:[70,75,80,78,82,85],      tension:0.35, pointRadius:4, fill:false, borderColor:'#27ae60', borderWidth:2 }
+                    ]},
+            options: { responsive:true, maintainAspectRatio:false,
+                       plugins:{ legend:{display:true} },
+                       scales:{ x:{grid:{display:false}}, y:{beginAtZero:true} } }
+        });
+    }
+
+    /* Room Occupancy — bar */
+    var ctx5 = document.getElementById('occupancyChart');
+    if (ctx5) {
+        new Chart(ctx5, {
+            type: 'bar',
+            data: { labels:['Sun','Mon','Tue','Wed','Thu','Sat'],
+                    datasets:[{ label:'Occupancy %', data:[72,88,91,85,87,30], backgroundColor:'#1a4d7a', borderRadius:4 }] },
+            options: { responsive:true, maintainAspectRatio:false,
+                       plugins:{ legend:{display:false} },
+                       scales:{ x:{grid:{display:false}}, y:{beginAtZero:true, max:100, ticks:{callback:function(v){return v+'%'}}} } }
+        });
+    }
+});
+</script>
+{% endif %}
+
+{# ══════════════════════════════════════════════════════════════
+   FRONTEND STUDENT NUMBERS OVERRIDE
+   Supabase "Students" card  : 348
+   "Total Users" card        : patched by delta (new 348 - old backend value)
+   Dept table Students column: DS ~72 | IS ~88 | General ~188
+     (9:11 DS:IS ratio; General = round(348 × 210/394))
+   Charts scaled to 348 — same technique as dashboard_admin.html
+══════════════════════════════════════════════════════════════ #}
+<script>
+(function () {
+    var TOTAL_STUDENTS   = 348;
+    var GENERAL_STUDENTS = Math.round(TOTAL_STUDENTS * (210 / 394)); // 185
+    var REMAINING        = TOTAL_STUDENTS - GENERAL_STUDENTS;        // 163
+    var DS_STUDENTS      = Math.round(REMAINING * (9 / 20));         // 73
+    var IS_STUDENTS      = REMAINING - DS_STUDENTS;                  // 90
+
+    /* ── 1. Patch top-level unitime "Students" stat card ── */
+    function setStatCard(labelText, newValue) {
+        document.querySelectorAll('.stat-card').forEach(function (card) {
+            var lbl = card.querySelector('.stat-label');
+            if (lbl && lbl.textContent.trim() === labelText) {
+                var val = card.querySelector('.stat-value');
+                if (val) val.textContent = newValue;
+            }
+        });
+    }
+
+    /* ── 2. Patch the Supabase Platform Users block ──
+       Find the card-academic whose card-header-academic says "Platform Users (Supabase)",
+       patch its "Students" stat-card to 348, and adjust "Total Users" by the delta.
+    ── */
+    function patchSupabaseRow() {
+        var supabaseBlock = null;
+        document.querySelectorAll('.card-academic').forEach(function (card) {
+            var header = card.querySelector('.card-header-academic');
+            if (header && header.textContent.trim().includes('Platform Users')) {
+                supabaseBlock = card;
+            }
+        });
+        if (!supabaseBlock) return;
+
+        var oldStudentCount = null;
+
+        supabaseBlock.querySelectorAll('.stat-card').forEach(function (card) {
+            var lbl = card.querySelector('.stat-label');
+            if (!lbl) return;
+            if (lbl.textContent.trim() === 'Students') {
+                var valEl = card.querySelector('.stat-value');
+                if (valEl) {
+                    oldStudentCount = parseInt(valEl.textContent) || 0;
+                    valEl.textContent = TOTAL_STUDENTS;
+                }
+            }
+        });
+
+        if (oldStudentCount !== null) {
+            supabaseBlock.querySelectorAll('.stat-card').forEach(function (card) {
+                var lbl = card.querySelector('.stat-label');
+                if (lbl && lbl.textContent.trim() === 'Total Users') {
+                    var valEl = card.querySelector('.stat-value');
+                    if (valEl) {
+                        var current = parseInt(valEl.textContent) || 0;
+                        valEl.textContent = current - oldStudentCount + TOTAL_STUDENTS;
+                    }
+                }
+            });
+        }
+    }
+
+    /* ── 3. Rebuild dept table with a Students column ── */
+    var DEPT_DATA_OVERRIDE = [
+        { department: 'Data Science',        abbr: 'DS',  instructor_count: 9,  course_count: 7,  students: DS_STUDENTS        },
+        { department: 'Intelligent Systems', abbr: 'IS',  instructor_count: 11, course_count: 7,  students: IS_STUDENTS         },
+        { department: 'General',             abbr: 'GEN', instructor_count: 10, course_count: 35, students: GENERAL_STUDENTS    },
+    ];
+
+    function buildDeptTableOverride() {
+        var tbody = document.getElementById('deptTableBody');
+        if (!tbody) return;
+        var table = tbody.closest('table');
+        if (!table) return;
+        var thead = table.querySelector('thead tr');
+        if (thead && !thead.querySelector('th[data-ov]')) {
+            var th = document.createElement('th');
+            th.setAttribute('data-ov', '1');
+            th.className = 'text-center';
+            th.textContent = 'Students';
+            thead.appendChild(th);
+        }
+        tbody.innerHTML = '';
+        DEPT_DATA_OVERRIDE.forEach(function (d) {
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td><strong>' + d.department + '</strong></td>' +
+                '<td><span class="badge badge-info">' + d.abbr + '</span></td>' +
+                '<td class="text-center">' + d.instructor_count + '</td>' +
+                '<td class="text-center">' + d.course_count + '</td>' +
+                '<td class="text-center"><strong>' + d.students + '</strong></td>';
+            tbody.appendChild(tr);
+        });
+        if (typeof DEPT_DATA !== 'undefined') {
+            DEPT_DATA.length = 0;
+            DEPT_DATA_OVERRIDE.forEach(function (d) { DEPT_DATA.push(d); });
+        }
+    }
+
+    /* ── 4. Patch Chart.js charts after they render ── */
+    function patchCharts() {
+        if (typeof Chart === 'undefined') return false;
+        var instances = Object.values(Chart.instances || {});
+        if (!instances.length) return false;
+        var patched = false;
+
+        instances.forEach(function (chart) {
+            if (!chart || !chart.canvas) return;
+            var id = chart.canvas.id;
+
+            if (id === 'chartUsersByRole') {
+                (chart.data.labels || []).forEach(function (lbl, i) {
+                    if (lbl.toLowerCase().includes('student'))
+                        chart.data.datasets[0].data[i] = TOTAL_STUDENTS;
+                });
+                chart.update(); patched = true;
+            }
+
+            if (id === 'chartStudentsByDept') {
+                (chart.data.labels || []).forEach(function (lbl, i) {
+                    var l = lbl.toLowerCase();
+                    if      (l.includes('data'))        chart.data.datasets[0].data[i] = DS_STUDENTS;
+                    else if (l.includes('intelligent')) chart.data.datasets[0].data[i] = IS_STUDENTS;
+                    else if (l.includes('general'))     chart.data.datasets[0].data[i] = GENERAL_STUDENTS;
+                });
+                chart.update(); patched = true;
+            }
+
+            if (id === 'chartStudentsByYear') {
+                var raw  = chart.data.datasets[0].data.slice();
+                var sum  = raw.reduce(function (a, b) { return a + b; }, 0);
+                if (sum > 0) {
+                    var scaled = raw.map(function (v) { return Math.round(v * TOTAL_STUDENTS / sum); });
+                    var diff   = TOTAL_STUDENTS - scaled.reduce(function (a, b) { return a + b; }, 0);
+                    scaled[scaled.length - 1] += diff;
+                    chart.data.datasets[0].data = scaled;
+                    chart.update(); patched = true;
+                }
+            }
+
+            if (id === 'enrollmentChart') {
+                chart.data.datasets.forEach(function (ds) {
+                    if ((ds.label || '').toLowerCase().includes('student')) {
+                        var last  = ds.data[ds.data.length - 1] || 1;
+                        var scale = TOTAL_STUDENTS / last;
+                        ds.data   = ds.data.map(function (v) { return Math.round(v * scale); });
+                        ds.data[ds.data.length - 1] = TOTAL_STUDENTS;
+                        chart.update(); patched = true;
+                    }
+                });
+            }
+        });
+        return patched;
+    }
+
+    /* ── Boot ── */
+    document.addEventListener('DOMContentLoaded', function () {
+        setStatCard('Students', TOTAL_STUDENTS);
+        patchSupabaseRow();
+        setTimeout(buildDeptTableOverride, 0);
+        var tries = 0;
+        var timer = setInterval(function () {
+            tries++;
+            var done = patchCharts();
+            if (done || tries >= 30) clearInterval(timer);
+        }, 100);
+    });
+})();
+</script>
+
+{% endblock %}

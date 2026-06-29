@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UniTime Integration Test</title>
+
+  <style>
+    :root{
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: rgba(15, 23, 42, .08);
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --shadow2: 0 6px 18px rgba(2, 6, 23, .08);
+
+      --brand: #1a4d7a;
+      --brand2: #103554;
+
+      --green: #27ae60;
+      --blue: #2980b9;
+      --gray: #7f8c8d;
+      --red: #e74c3c;
+      --amber: #f39c12;
+
+      --radius: 16px;
+      --radius2: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(26,77,122,.14), transparent 60%),
+                  radial-gradient(900px 500px at 100% 0%, rgba(41,128,185,.10), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      padding: 22px;
+    }
+
+    .container{
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .title-wrap{
+      display:flex;
+      align-items:flex-start;
+      gap: 12px;
+    }
+
+    .mark{
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(26,77,122,.12);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex: 0 0 auto;
+      box-shadow: 0 10px 22px rgba(26,77,122,.10);
+      border: 1px solid rgba(26,77,122,.15);
+    }
+
+    h1{
+      font-size: 22px;
+      line-height: 1.2;
+      margin-top: 2px;
+      color: #0b1b2b;
+      letter-spacing: .2px;
+    }
+
+    .subtitle{
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: 13px;
+      max-width: 720px;
+    }
+
+    .back-btn{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(26,77,122,.22);
+      background: #fff;
+      color: var(--brand);
+      text-decoration:none;
+      font-weight: 700;
+      font-size: 13px;
+      box-shadow: 0 10px 24px rgba(26,77,122,.08);
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+      white-space: nowrap;
+    }
+
+    .back-btn:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(26,77,122,.12);
+      background: rgba(26,77,122,.03);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .card-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .card h2{
+      font-size: 15px;
+      color: #0b1b2b;
+      letter-spacing: .2px;
+    }
+
+    .desc{
+      color: var(--muted);
+      font-size: 12.5px;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    code{
+      background: rgba(2,6,23,.06);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 12px;
+      border: 1px solid rgba(2,6,23,.08);
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .btn{
+      padding: 10px 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      box-shadow: var(--shadow2);
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 12px 24px rgba(2,6,23,.10); }
+    .btn:active{ transform: translateY(0px) scale(.99); opacity: .95; }
+
+    .btn-green{ background: linear-gradient(180deg, #2ecc71, var(--green)); }
+    .btn-blue{  background: linear-gradient(180deg, #3498db, var(--blue));  }
+    .btn-gray{  background: linear-gradient(180deg, #95a5a6, var(--gray));  }
+
+    select{
+      padding: 10px 12px;
+      border: 1px solid rgba(2,6,23,.14);
+      border-radius: 12px;
+      font-size: 13px;
+      margin-top: 8px;
+      background: #fff;
+      color: #0b1b2b;
+      outline: none;
+      box-shadow: 0 10px 22px rgba(2,6,23,.06);
+      transition: box-shadow .15s ease, border-color .15s ease;
+      width: min(520px, 100%);
+    }
+    select:focus{
+      border-color: rgba(26,77,122,.40);
+      box-shadow: 0 0 0 4px rgba(26,77,122,.12), 0 12px 24px rgba(2,6,23,.08);
+    }
+
+    .result{
+      margin-top: 14px;
+      padding: 14px;
+      background: #fbfcfe;
+      border-radius: 14px;
+      border: 1px solid rgba(2,6,23,.08);
+      border-left: 6px solid rgba(100,116,139,.45);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 520px;
+      overflow-y: auto;
+      display: none;
+      box-shadow: 0 10px 22px rgba(2,6,23,.06);
+    }
+    .result.visible{ display:block; }
+    .result.ok{   border-left-color: rgba(39,174,96,.95); }
+    .result.err{  border-left-color: rgba(231,76,60,.95); }
+    .result.load{ border-left-color: rgba(243,156,18,.95); }
+
+    table.data{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 12px;
+      font-size: 13px;
+      overflow: hidden;
+      border: 1px solid rgba(2,6,23,.10);
+      border-radius: 14px;
+      box-shadow: 0 10px 22px rgba(2,6,23,.06);
+    }
+    table.data th{
+      background: linear-gradient(180deg, var(--brand), var(--brand2));
+      color: white;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 12.5px;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    table.data td{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(2,6,23,.08);
+      background: #fff;
+      vertical-align: top;
+    }
+    table.data tr:last-child td{ border-bottom: none; }
+    table.data tr:hover td{ background: rgba(26,77,122,.04); }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      background: rgba(41,128,185,.10);
+      color: #1a6fa8;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      margin: 2px 4px 0 0;
+      border: 1px solid rgba(41,128,185,.20);
+      white-space: nowrap;
+    }
+
+    .meta-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(2,6,23,.14);
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(2,6,23,.10);
+      background: rgba(255,255,255,.9);
+      color: #0b1b2b;
+      font-size: 12px;
+      box-shadow: 0 10px 22px rgba(2,6,23,.05);
+      user-select:none;
+    }
+
+    .dot{
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(100,116,139,.6);
+      border: 1px solid rgba(2,6,23,.18);
+    }
+    .dot.ok{ background: rgba(39,174,96,.85); }
+    .dot.err{ background: rgba(231,76,60,.85); }
+    .dot.load{ background: rgba(243,156,18,.85); }
+
+    .footer{
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align:center;
+    }
+
+    @media (min-width: 900px){
+      .grid{
+        grid-template-columns: 1fr 1fr;
+      }
+      .card.full{
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="title-wrap">
+        <div class="mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a4d7a">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3M5 11h14M6 21h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h1>UniTime Integration Test</h1>
+          <p class="subtitle">Verify data flows between FastAPI and UniTime. Three working endpoints confirmed.</p>
+        </div>
+      </div>
+
+      <a class="back-btn" href="/dashboard/scheduler" title="Back to Scheduler Dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 18l-6-6 6-6"/>
+        </svg>
+        Back to Dashboard
+      </a>
+    </div>
+
+    <div class="grid">
+
+      <!-- ══════════════ HEALTH CHECK ══════════════ -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>1. Connection Health Check</h2>
+            <p class="desc">Calls <code>GET /api/unitime/health</code> — authenticates and fetches session list from UniTime.</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-green" onclick="testHealth()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20 6L9 17l-5-5"/>
+            </svg>
+            Test Connection
+          </button>
+
+          <span class="pill" id="pill-health">
+            <span class="dot" id="dot-health"></span>
+            Health: idle
+          </span>
+        </div>
+
+        <div class="result" id="r-health"></div>
+      </div>
+
+      <!-- ══════════════ SESSIONS ══════════════ -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>2. Academic Sessions (IN: UniTime → App)</h2>
+            <p class="desc">Calls <code>GET /api/unitime/sessions</code> — fetches all configured terms.</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-blue" onclick="testSessions()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+            </svg>
+            Get Sessions
+          </button>
+
+          <span class="pill" id="pill-sessions">
+            <span class="dot" id="dot-sessions"></span>
+            Sessions: idle
+          </span>
+        </div>
+
+        <div class="result" id="r-sessions"></div>
+      </div>
+
+      <!-- ══════════════ ROOMS ══════════════ -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>3. Rooms (IN: UniTime → App)</h2>
+            <p class="desc">Calls <code>GET /api/unitime/rooms?term=...</code> — fetches room data.</p>
+          </div>
+        </div>
+
+        <select id="sel-rooms">
+          <option value="Fal2010woebegon">Fal 2010 woebegon (has data)</option>
+          <option value="Fall2025Main">Fall 2025 Main (empty)</option>
+        </select>
+
+        <div class="actions">
+          <button class="btn btn-blue" onclick="testRooms(false)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 3h18v18H3V3zm6 0v18M3 9h18"/>
+            </svg>
+            Get Rooms (Table)
+          </button>
+
+          <button class="btn btn-gray" onclick="testRooms(true)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            Raw JSON
+          </button>
+
+          <span class="pill" id="pill-rooms">
+            <span class="dot" id="dot-rooms"></span>
+            Rooms: idle
+          </span>
+        </div>
+
+        <div class="result" id="r-rooms"></div>
+      </div>
+
+      <!-- ══════════════ INSTRUCTORS ══════════════ -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>4. Instructors (IN: UniTime → App)</h2>
+            <p class="desc">Calls <code>GET /api/unitime/instructors?term=...</code> — fetches instructor data by department.</p>
+          </div>
+        </div>
+
+        <select id="sel-instr">
+          <option value="Fal2010woebegon">Fal 2010 woebegon (has data)</option>
+          <option value="Fall2025Main">Fall 2025 Main (empty)</option>
+        </select>
+
+        <div class="actions">
+          <button class="btn btn-blue" onclick="testInstructors(false)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+            </svg>
+            Get Instructors (Table)
+          </button>
+
+          <button class="btn btn-gray" onclick="testInstructors(true)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            Raw JSON
+          </button>
+
+          <span class="pill" id="pill-instr">
+            <span class="dot" id="dot-instr"></span>
+            Instructors: idle
+          </span>
+        </div>
+
+        <div class="result" id="r-instr"></div>
+      </div>
+
+      <!-- ══════════════ ENROLLMENTS ══════════════ -->
+      <div class="card full">
+        <div class="card-head">
+          <div>
+            <h2>5. Enrollments (IN: UniTime → App)</h2>
+            <p class="desc">Calls <code>GET /api/unitime/enrollments?term=...</code> — currently empty but endpoint works.</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-blue" onclick="testEnrollments()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Get Enrollments
+          </button>
+
+          <span class="pill" id="pill-enroll">
+            <span class="dot" id="dot-enroll"></span>
+            Enrollments: idle
+          </span>
+        </div>
+
+        <div class="result" id="r-enroll"></div>
+
+        <div class="meta-row">
+          <div class="pill">
+            <span class="dot ok"></span>
+            Tip: Use "Raw JSON" when you debug payload structure.
+          </div>
+          <div class="pill">
+            <span class="dot load"></span>
+            State indicator updates automatically per test.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">AI Timetable System | UniTime Integration Test</div>
+  </div>
+
+  <script>
+    function el(id) { return document.getElementById(id); }
+
+    function setPill(name, state, text) {
+      const dot = el('dot-' + name);
+      const pill = el('pill-' + name);
+      if (!dot || !pill) return;
+
+      dot.className = 'dot';
+      if (state === 'ok') dot.classList.add('ok');
+      if (state === 'err') dot.classList.add('err');
+      if (state === 'load') dot.classList.add('load');
+
+      pill.innerHTML = '<span class="dot ' + (state || '') + '" id="dot-' + name + '"></span>' + text;
+      const newDot = pill.querySelector('.dot');
+      newDot.className = 'dot';
+      if (state === 'ok') newDot.classList.add('ok');
+      if (state === 'err') newDot.classList.add('err');
+      if (state === 'load') newDot.classList.add('load');
+    }
+
+    function show(id, text, cls) {
+      const e = el(id);
+      e.className = 'result visible ' + cls;
+      if (typeof text === 'object') text = JSON.stringify(text, null, 2);
+      e.textContent = text;
+    }
+
+    function showHtml(id, html, cls) {
+      const e = el(id);
+      e.className = 'result visible ' + cls;
+      e.innerHTML = html;
+    }
+
+    async function api(url) {
+      const r = await fetch(url);
+      return await r.json();
+    }
+
+    async function testHealth() {
+      setPill('health', 'load', 'Health: connecting');
+      show('r-health', 'Connecting...', 'load');
+      try {
+        const d = await api('/api/unitime/health');
+        if (d.connected) {
+          let t = 'STATUS: CONNECTED\n\n';
+          t += `Sessions found: ${d.session_count}\n\n`;
+          d.sessions.forEach(s => {
+            t += `  ${s.reference}\n`;
+            t += `    ${s.label}`;
+            t += s.has_classes ? ' [has class data]\n\n' : ' [empty]\n\n';
+          });
+          setPill('health', 'ok', 'Health: connected');
+          show('r-health', t, 'ok');
+        } else {
+          setPill('health', 'err', 'Health: disconnected');
+          show('r-health', 'DISCONNECTED\n\n' + d.error, 'err');
+        }
+      } catch(e) {
+        setPill('health', 'err', 'Health: error');
+        show('r-health', 'Network error: ' + e.message, 'err');
+      }
+    }
+
+    async function testSessions() {
+      setPill('sessions', 'load', 'Sessions: loading');
+      show('r-sessions', 'Loading...', 'load');
+      try {
+        const d = await api('/api/unitime/sessions');
+        if (!d.success) {
+          setPill('sessions', 'err', 'Sessions: error');
+          show('r-sessions', d.error, 'err');
+          return;
+        }
+
+        let html = `<strong>${d.count} session(s) found</strong>`;
+        html += '<table class="data"><tr><th>Reference</th><th>Term</th><th>Year</th><th>Campus</th><th>Dates</th><th>Status</th></tr>';
+        d.data.forEach(s => {
+          const status = s.status || {};
+          const cls = status.classes ? 'Classes' : '—';
+          html += `<tr>
+            <td><strong>${s.reference}</strong></td>
+            <td>${s.term}</td>
+            <td>${s.year}</td>
+            <td>${s.campus}</td>
+            <td>${s.beginDate} → ${s.endDate}</td>
+            <td>${status.label}<br><small>${cls}</small></td>
+          </tr>`;
+        });
+        html += '</table>';
+
+        setPill('sessions', 'ok', `Sessions: ${d.count} loaded`);
+        showHtml('r-sessions', html, 'ok');
+      } catch(e) {
+        setPill('sessions', 'err', 'Sessions: error');
+        show('r-sessions', 'Error: ' + e.message, 'err');
+      }
+    }
+
+    async function testRooms(raw) {
+      const term = el('sel-rooms').value;
+      setPill('rooms', 'load', 'Rooms: loading');
+      show('r-rooms', 'Loading...', 'load');
+
+      try {
+        const d = await api('/api/unitime/rooms?term=' + term);
+        if (!d.success) {
+          setPill('rooms', 'err', 'Rooms: error');
+          show('r-rooms', d.error, 'err');
+          return;
+        }
+
+        if (raw) {
+          setPill('rooms', 'ok', `Rooms: ${d.count} (raw)`);
+          show('r-rooms', d, 'ok');
+          return;
+        }
+
+        if (d.count === 0) {
+          setPill('rooms', 'ok', 'Rooms: 0 found');
+          show('r-rooms', `No rooms found for "${term}".`, 'ok');
+          return;
+        }
+
+        let html = `<strong>${d.count} room(s) for "${term}"</strong>`;
+        html += '<table class="data"><tr><th>Room</th><th>Building</th><th>Type</th><th>Capacity</th><th>Features</th></tr>';
+        d.rooms.forEach(r => {
+          const feats = (r.features || []).map(f => `<span class="tag">${f}</span>`).join(' ');
+          html += `<tr>
+            <td><strong>${r.full_name}</strong></td>
+            <td>${r.building_name}</td>
+            <td>${r.type}</td>
+            <td>${r.capacity} (exam: ${r.exam_capacity})</td>
+            <td>${feats || '—'}</td>
+          </tr>`;
+        });
+        html += '</table>';
+
+        setPill('rooms', 'ok', `Rooms: ${d.count} loaded`);
+        showHtml('r-rooms', html, 'ok');
+      } catch(e) {
+        setPill('rooms', 'err', 'Rooms: error');
+        show('r-rooms', 'Error: ' + e.message, 'err');
+      }
+    }
+
+    async function testInstructors(raw) {
+      const term = el('sel-instr').value;
+      setPill('instr', 'load', 'Instructors: loading');
+      show('r-instr', 'Loading...', 'load');
+
+      try {
+        const d = await api('/api/unitime/instructors?term=' + term);
+        if (!d.success) {
+          setPill('instr', 'err', 'Instructors: error');
+          show('r-instr', d.error, 'err');
+          return;
+        }
+
+        if (raw) {
+          setPill('instr', 'ok', `Instructors: ${d.instructor_count} (raw)`);
+          show('r-instr', d, 'ok');
+          return;
+        }
+
+        if (d.instructor_count === 0) {
+          setPill('instr', 'ok', 'Instructors: 0 found');
+          show('r-instr', `No instructors found for "${term}".`, 'ok');
+          return;
+        }
+
+        let html = `<strong>${d.instructor_count} instructor(s) across ${d.department_count} department(s)</strong>`;
+        html += '<table class="data"><tr><th>Name</th><th>Position</th><th>Department</th><th>External ID</th><th>Email</th></tr>';
+        d.instructors.forEach(i => {
+          html += `<tr>
+            <td><strong>${i.name}</strong></td>
+            <td>${i.position || '—'}</td>
+            <td>${i.department} (${i.department_abbr})</td>
+            <td>${i.external_id || '—'}</td>
+            <td>${i.email || '—'}</td>
+          </tr>`;
+        });
+        html += '</table>';
+
+        setPill('instr', 'ok', `Instructors: ${d.instructor_count} loaded`);
+        showHtml('r-instr', html, 'ok');
+      } catch(e) {
+        setPill('instr', 'err', 'Instructors: error');
+        show('r-instr', 'Error: ' + e.message, 'err');
+      }
+    }
+
+    async function testEnrollments() {
+      setPill('enroll', 'load', 'Enrollments: loading');
+      show('r-enroll', 'Loading...', 'load');
+
+      try {
+        const d = await api('/api/unitime/enrollments?term=Fal2010woebegon');
+        if (d.success && d.count === 0) {
+          setPill('enroll', 'ok', 'Enrollments: 0 (endpoint OK)');
+          show('r-enroll',
+            'Endpoint works. No enrollment data loaded in UniTime.\nThis confirms the connection — data will appear once enrollments are imported.',
+            'ok'
+          );
+        } else {
+          setPill('enroll', d.success ? 'ok' : 'err', d.success ? 'Enrollments: loaded' : 'Enrollments: error');
+          show('r-enroll', d, d.success ? 'ok' : 'err');
+        }
+      } catch(e) {
+        setPill('enroll', 'err', 'Enrollments: error');
+        show('r-enroll', 'Error: ' + e.message, 'err');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block body_class %}{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="{% if role_id in ('student', 'ta', 'lecturer') %}col-lg-10{% else %}col-lg-6{% endif %}">
+                <div class="auth-card animate-fade-in" style="max-width:100%;">
+                    <div class="auth-header">
+                        <div class="university-logo-container auth-logo mx-auto mb-4">
+                            <img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo">
+                        </div>
+                        <h1 class="auth-title">Create Account</h1>
+                        <p class="auth-subtitle">Register as {{ role_title }}</p>
+                    </div>
+
+                    <div class="auth-body">
+                        <div class="row g-4">
+                            <div class="{% if role_id in ('student', 'ta', 'lecturer') %}col-lg-7{% else %}col-12{% endif %}">
+
+                                <div class="role-badge-container">
+                                    <div class="role-badge-icon">
+                                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            {% if role_id == 'student' %}
+                                            <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
+                                            {% elif role_id in ('ta', 'lecturer') %}
+                                            <path d="M12,15C7.58,15 4,16.79 4,19V21H20V19C20,16.79 16.42,15 12,15M8,9A4,4 0 0,0 12,13A4,4 0 0,0 16,9"/>
+                                            {% elif role_id == 'scheduler' %}
+                                            <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/>
+                                            {% else %}
+                                            <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z"/>
+                                            {% endif %}
+                                        </svg>
+                                    </div>
+                                    <div class="role-badge-text-container">
+                                        <span class="role-badge-label">Registering as</span>
+                                        <span class="role-badge-value">{{ role_title }}</span>
+                                    </div>
+                                </div>
+
+                                {% if error %}
+                                <div class="alert alert-danger" style="border-radius:12px;">{{ error }}</div>
+                                {% endif %}
+
+                                <form action="/signup/{{ role_id }}" method="POST">
+
+                                    <!-- STUDENT FIELDS -->
+                                    {% if role_id == 'student' %}
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">First Name *</label>
+                                            <input type="text" name="first_name" class="form-control-academic" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">Last Name *</label>
+                                            <input type="text" name="last_name" class="form-control-academic" required>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Student ID *</label>
+                                        <input type="text" name="student_id" class="form-control-academic" placeholder="e.g. 20240001" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">University Email *</label>
+                                        <input type="email" name="email" class="form-control-academic" placeholder="you@university.edu" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Department / Major *</label>
+                                        <select name="department" class="form-control-academic" required>
+                                            <option value="">Select your department...</option>
+                                            <option value="Data Science">Data Science</option>
+                                            <option value="Intelligent Systems">Intelligent Systems</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Academic Year *</label>
+                                        <select name="academic_year" class="form-control-academic" required>
+                                            <option value="">Select your year...</option>
+                                            <option value="1">Year 1 (Term 1 & 2)</option>
+                                            <option value="2">Year 2 (Term 3 & 4)</option>
+                                            <option value="3">Year 3 (Term 5 & 6)</option>
+                                            <option value="4">Year 4 (Term 7 & 8)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- STAFF FIELDS (TA / Lecturer) -->
+                                    {% elif role_id in ('ta', 'lecturer') %}
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">First Name *</label>
+                                            <input type="text" name="first_name" class="form-control-academic" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">Last Name *</label>
+                                            <input type="text" name="last_name" class="form-control-academic" required>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Employee ID *</label>
+                                        <input type="text" name="employee_id" class="form-control-academic" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">University Email *</label>
+                                        <input type="email" name="email" class="form-control-academic" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Position *</label>
+                                        <select name="position" class="form-control-academic" required>
+                                            <option value="">Select position...</option>
+                                            <option>Professor</option>
+                                            <option>Associate Professor</option>
+                                            <option>Assistant Professor</option>
+                                            <option>Lecturer</option>
+                                            <option>Teaching Assistant</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- SCHEDULER FIELDS -->
+                                    {% elif role_id == 'scheduler' %}
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Full Name *</label>
+                                        <input type="text" name="full_name" class="form-control-academic" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Employee ID *</label>
+                                        <input type="text" name="employee_id" class="form-control-academic" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Email *</label>
+                                        <input type="email" name="email" class="form-control-academic" required>
+                                    </div>
+
+                                    <!-- ADMIN FIELDS -->
+                                    {% else %}
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Full Name *</label>
+                                        <input type="text" name="full_name" class="form-control-academic" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Academic Position *</label>
+                                        <select name="academic_position" class="form-control-academic" required>
+                                            <option value="">Select Position...</option>
+                                            <option>Dean</option>
+                                            <option>Vice Dean</option>
+                                            <option>Academy Director</option>
+                                            <option>Head of Department</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-academic">Official University Email *</label>
+                                        <input type="email" name="email" class="form-control-academic" required>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- PASSWORD (all roles) -->
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">Password *</label>
+                                            <input type="password" name="password" class="form-control-academic" placeholder="Minimum 6 characters" required minlength="6">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label-academic">Confirm Password *</label>
+                                            <input type="password" name="confirm_password" class="form-control-academic" placeholder="Re-enter password" required minlength="6">
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary-academic w-100 mb-3">
+                                        <svg class="me-2" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                                        </svg>
+                                        Create Account
+                                    </button>
+                                </form>
+
+                                <div class="text-center">
+                                    <p class="mb-2"><small>Already have an account? <a href="/login/{{ role_id }}" class="text-primary-academic fw-bold">Sign In</a></small></p>
+                                    <p class="mb-0"><a href="/" class="text-secondary-academic" style="font-size:.875rem;">← Change Role</a></p>
+                                </div>
+                            </div>
+
+                            <!-- RIGHT SIDEBAR (student/staff only) -->
+                            {% if role_id in ('student', 'ta', 'lecturer') %}
+                            <div class="col-lg-5">
+                                <div class="card-academic h-100 bg-lighter-blue">
+                                    <h5 class="text-primary-academic fw-bold mb-3">
+                                        {% if role_id == 'student' %}Student Benefits{% else %}Staff Features{% endif %}
+                                    </h5>
+                                    <ul class="list-unstyled">
+                                        {% if role_id == 'student' %}
+                                        <li class="mb-3"><strong>Real-time Schedule Access</strong><br><small class="text-secondary-academic">View your timetable anytime</small></li>
+                                        <li class="mb-3"><strong>Course Information</strong><br><small class="text-secondary-academic">Instructors, rooms, and timing</small></li>
+                                        <li class="mb-3"><strong>Export & Print</strong><br><small class="text-secondary-academic">Download your schedule</small></li>
+                                        <li class="mb-3"><strong>Instant Updates</strong><br><small class="text-secondary-academic">Schedule change notifications</small></li>
+                                        {% else %}
+                                        <li class="mb-3"><strong>Teaching Schedule</strong><br><small class="text-secondary-academic">View and organize your classes</small></li>
+                                        <li class="mb-3"><strong>Set Availability</strong><br><small class="text-secondary-academic">Define available time slots</small></li>
+                                        <li class="mb-3"><strong>Student Rosters</strong><br><small class="text-secondary-academic">Access enrolled student lists</small></li>
+                                        <li class="mb-3"><strong>Course Management</strong><br><small class="text-secondary-academic">View course details</small></li>
+                                        {% endif %}
+                                    </ul>
+                                    <div class="alert-academic alert-info mt-4">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <div><strong>Need Help?</strong><br>Contact support@university.edu</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
