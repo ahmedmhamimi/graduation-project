@@ -243,36 +243,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    /* ── 3. Section column: fill with instructor name ── */
-    /*
-     * Priority:
-     *   1. data-instructor from server (course.instructor_name)
-     *   2. Deterministic fallback from the static list below
-     *
-     * For students we never use "current user name" as the instructor
-     * (the logged-in user is a student, not a staff member).
-     */
-    var FALLBACK_INSTRUCTORS = [
-        "Eng. Salma Mohamed", "Eng. Mazin Aziz", "Eng. Aya Abdelhamid",
-        "Eng. Ahmed Metwalli", "Eng. Mohamed El-Sayed", "Eng. Mahmoud"
-    ];
-
-    function seededPick(str, arr) {
-        var hash = 0;
-        for (var i = 0; i < str.length; i++) {
-            hash = (hash * 31 + str.charCodeAt(i)) & 0xffffffff;
-        }
-        return arr[Math.abs(hash) % arr.length];
-    }
-
+    /* ── 3. Section column: fill with instructor name from server data only ── */
     document.querySelectorAll('td.section-cell').forEach(function(td) {
         var serverInstructor = (td.getAttribute('data-instructor') || '').trim();
         var suffix           = (td.getAttribute('data-suffix')      || '').trim();
-        var courseCode       = (td.getAttribute('data-course')      || '').trim();
 
-        var instructorName = serverInstructor
-            ? serverInstructor
-            : seededPick(courseCode || suffix || 'x', FALLBACK_INSTRUCTORS);
+        var instructorName = serverInstructor || 'TBA';
 
         /* If a class suffix exists, show it on top with the instructor name below */
         if (suffix && suffix !== '—') {

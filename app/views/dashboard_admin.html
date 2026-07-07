@@ -504,7 +504,7 @@
                                     <td class="text-center">{{ room.capacity }}</td>
                                     <td class="text-center">{{ room.class_count }}</td>
                                     <td style="min-width:120px;">
-                                        {% set pct = [room.class_count * 10, 100] | min %}
+                                        {% set pct = [(room.class_count / 18 * 100) | round | int, 100] | min %}
                                         <div class="progress" style="height:8px;border-radius:4px;">
                                             <div class="progress-bar" data-width="{{ pct }}" data-bg="var(--primary-blue)"></div>
                                         </div>
@@ -541,20 +541,6 @@
                 </div>
                 {% endif %}
 
-                <div class="row g-4 mt-1">
-                    <div class="col-md-6">
-                        <div class="card-academic" style="min-height:300px;">
-                            <h6 class="text-primary-academic mb-0">Course Enrollment Trends</h6>
-                            <div style="height:240px;"><canvas id="enrollmentChart"></canvas></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card-academic" style="min-height:300px;">
-                            <h6 class="text-primary-academic mb-0">Weekly Room Occupancy</h6>
-                            <div style="height:240px;"><canvas id="occupancyChart"></canvas></div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {# ── INSTRUCTORS TAB ── #}
@@ -942,156 +928,9 @@ function filterRoomTimetable(rawRoomValue) {
         if (ctx3 && yearLabels.length > 0) {
             new Chart(ctx3, { type: 'bar', data: { labels: yearLabels, datasets: [{ label: 'Students', data: yearValues, backgroundColor: roleColors.slice(0, yearLabels.length), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { font: { size: 10 } } } }, plugins: { legend: { display: false } } } });
         }
-
-        var ctx4 = document.getElementById('enrollmentChart');
-        if (ctx4) {
-            new Chart(ctx4, { type: 'line', data: { labels: ['W1','W2','W3','W4','W5','W6'], datasets: [ { label: 'Students', data: [820,870,910,890,930,950], tension: 0.35, pointRadius: 4, fill: false, borderColor: '#1a4d7a', borderWidth: 2 }, { label: 'Courses', data: [70,75,80,78,82,85], tension: 0.35, pointRadius: 4, fill: false, borderColor: '#27ae60', borderWidth: 2 } ]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } } });
-        }
-
-        var ctx5 = document.getElementById('occupancyChart');
-        if (ctx5) {
-            new Chart(ctx5, { type: 'bar', data: { labels: ['Sun','Mon','Tue','Wed','Thu','Sat'], datasets: [{ label: 'Occupancy %', data: [72,88,91,85,87,30], backgroundColor: '#1a4d7a', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, max: 100, ticks: { callback: function(v){ return v+'%'; } } } } } });
-        }
     });
 </script>
 {% endif %}
 
-{# ══════════════════════════════════════════════════════════
-   FRONTEND STUDENT NUMBERS OVERRIDE
-   Total : 394  |  General : 210
-   DS    : ~83  (9/20 of remaining 184, instructor-weight ratio)
-   IS    : ~101 (11/20 of remaining 184)
-══════════════════════════════════════════════════════════ #}
-<script>
-(function () {
-    var TOTAL_STUDENTS   = 394;
-    var GENERAL_STUDENTS = 210;
-    var REMAINING        = TOTAL_STUDENTS - GENERAL_STUDENTS; // 184
-    var DS_STUDENTS      = Math.round(REMAINING * (9 / 20));  // 83
-    var IS_STUDENTS      = REMAINING - DS_STUDENTS;            // 101
-
-    /* ── 1. Patch the "Students" stat card ── */
-    function setStatCard(labelText, newValue) {
-        document.querySelectorAll('.stat-card').forEach(function (card) {
-            var lbl = card.querySelector('.stat-label');
-            if (lbl && lbl.textContent.trim() === labelText) {
-                var val = card.querySelector('.stat-value');
-                if (val) val.textContent = newValue;
-            }
-        });
-    }
-
-    /* ── 2. Rebuild dept table with a Students column ── */
-    var DEPT_DATA_OVERRIDE = [
-        { department: 'Data Science',        abbr: 'DS',  instructor_count: 9,  course_count: 7,  students: DS_STUDENTS        },
-        { department: 'Intelligent Systems', abbr: 'IS',  instructor_count: 11, course_count: 7,  students: IS_STUDENTS         },
-        { department: 'General',             abbr: 'GEN', instructor_count: 10, course_count: 35, students: GENERAL_STUDENTS    },
-    ];
-
-    function buildDeptTableOverride() {
-        var tbody = document.getElementById('deptTableBody');
-        if (!tbody) return;
-        var table = tbody.closest('table');
-        if (!table) return;
-        var thead = table.querySelector('thead tr');
-        if (thead && !thead.querySelector('th[data-ov]')) {
-            var th = document.createElement('th');
-            th.setAttribute('data-ov', '1');
-            th.className = 'text-center';
-            th.textContent = 'Students';
-            thead.appendChild(th);
-        }
-        tbody.innerHTML = '';
-        DEPT_DATA_OVERRIDE.forEach(function (d) {
-            var tr = document.createElement('tr');
-            tr.innerHTML =
-                '<td><strong>' + d.department + '</strong></td>' +
-                '<td><span class="badge badge-info">' + d.abbr + '</span></td>' +
-                '<td class="text-center">' + d.instructor_count + '</td>' +
-                '<td class="text-center">' + d.course_count + '</td>' +
-                '<td class="text-center"><strong>' + d.students + '</strong></td>';
-            tbody.appendChild(tr);
-        });
-        if (typeof DEPT_DATA !== 'undefined') {
-            DEPT_DATA.length = 0;
-            DEPT_DATA_OVERRIDE.forEach(function (d) { DEPT_DATA.push(d); });
-        }
-    }
-
-    /* ── 3. Patch Chart.js charts after they render ── */
-    function patchCharts() {
-        if (typeof Chart === 'undefined') return false;
-        var instances = Object.values(Chart.instances || {});
-        if (!instances.length) return false;
-        var patched = false;
-
-        instances.forEach(function (chart) {
-            if (!chart || !chart.canvas) return;
-            var id = chart.canvas.id;
-
-            // Users-by-role doughnut
-            if (id === 'chartUsersByRole') {
-                (chart.data.labels || []).forEach(function (lbl, i) {
-                    if (lbl.toLowerCase().includes('student'))
-                        chart.data.datasets[0].data[i] = TOTAL_STUDENTS;
-                });
-                chart.update(); patched = true;
-            }
-
-            // Students-by-department bar
-            if (id === 'chartStudentsByDept') {
-                (chart.data.labels || []).forEach(function (lbl, i) {
-                    var l = lbl.toLowerCase();
-                    if      (l.includes('data'))        chart.data.datasets[0].data[i] = DS_STUDENTS;
-                    else if (l.includes('intelligent')) chart.data.datasets[0].data[i] = IS_STUDENTS;
-                    else if (l.includes('general'))     chart.data.datasets[0].data[i] = GENERAL_STUDENTS;
-                });
-                chart.update(); patched = true;
-            }
-
-            // Students-by-year bar — scale proportionally so bars sum to 394
-            if (id === 'chartStudentsByYear') {
-                var raw  = chart.data.datasets[0].data.slice();
-                var sum  = raw.reduce(function (a, b) { return a + b; }, 0);
-                if (sum > 0) {
-                    var scaled = raw.map(function (v) { return Math.round(v * TOTAL_STUDENTS / sum); });
-                    var diff   = TOTAL_STUDENTS - scaled.reduce(function (a, b) { return a + b; }, 0);
-                    scaled[scaled.length - 1] += diff; // absorb rounding drift
-                    chart.data.datasets[0].data = scaled;
-                    chart.update(); patched = true;
-                }
-            }
-
-            // Enrollment trend line — rescale "Students" series so final point = 394
-            if (id === 'enrollmentChart') {
-                chart.data.datasets.forEach(function (ds) {
-                    if ((ds.label || '').toLowerCase().includes('student')) {
-                        var last  = ds.data[ds.data.length - 1] || 1;
-                        var scale = TOTAL_STUDENTS / last;
-                        ds.data   = ds.data.map(function (v) { return Math.round(v * scale); });
-                        ds.data[ds.data.length - 1] = TOTAL_STUDENTS;
-                        chart.update(); patched = true;
-                    }
-                });
-            }
-        });
-        return patched;
-    }
-
-    /* ── Boot ── */
-    document.addEventListener('DOMContentLoaded', function () {
-        setStatCard('Students', TOTAL_STUDENTS);
-        // Defer by one tick so buildDeptTable() (another DOMContentLoaded listener) runs first
-        setTimeout(buildDeptTableOverride, 0);
-        // Poll for Chart.js charts (max 3 s)
-        var tries = 0;
-        var timer = setInterval(function () {
-            tries++;
-            var done = patchCharts();
-            if (done || tries >= 30) clearInterval(timer);
-        }, 100);
-    });
-})();
-</script>
 
 {% endblock %}

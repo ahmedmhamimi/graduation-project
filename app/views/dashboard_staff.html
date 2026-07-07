@@ -600,44 +600,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    /* ── 3. Section column: show instructor name ── */
-    var FALLBACK_INSTRUCTORS = [
-        "Salma Mohamed", "Mazin Aziz", "Aya Abdelhamid",
-        "Ahmed Metwalli", "Mohamed El-Sayed", "Mahmoud"
-    ];
-
-    function isProfessorRole(positionStr) {
-        var p = (positionStr || '').toLowerCase();
-        return p.includes('professor') || p.includes('prof') ||
-               p.includes('dean') || p.includes('vice');
-    }
-
-    var navBrand = document.querySelector('.navbar-brand-text');
-    var currentUserName = navBrand ? navBrand.textContent.trim() : '';
-
-    function seededPick(str, arr) {
-        var hash = 0;
-        for (var i = 0; i < str.length; i++) {
-            hash = (hash * 31 + str.charCodeAt(i)) & 0xffffffff;
-        }
-        return arr[Math.abs(hash) % arr.length];
-    }
-
+    /* ── 3. Section column: show instructor name from server data only ── */
     document.querySelectorAll('td.section-cell').forEach(function(td) {
         var serverInstructor = (td.getAttribute('data-instructor') || '').trim();
-        var position         = (td.getAttribute('data-position') || '').trim();
         var existingText     = td.textContent.trim();
 
-        var instructorName = '';
-
-        if (serverInstructor) {
-            instructorName = serverInstructor;
-        } else if (!isProfessorRole(position) && currentUserName) {
-            instructorName = currentUserName;
-        } else {
-            var seed = existingText || td.closest('tr').querySelector('td').textContent;
-            instructorName = seededPick(seed, FALLBACK_INSTRUCTORS);
-        }
+        var instructorName = serverInstructor || 'TBA';
 
         if (existingText && existingText !== '—') {
             td.innerHTML = existingText + '<br><small style="color:#555;">' + instructorName + '</small>';
@@ -646,11 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    /* ── 4. Time column fallback: replace TBA with a genuinely random slot per row ── */
-    var TIME_FALLBACK_OPTIONS = ['9:00', '11:00', '1:00'];
-    document.querySelectorAll('.time-fallback').forEach(function(el) {
-        el.textContent = TIME_FALLBACK_OPTIONS[Math.floor(Math.random() * TIME_FALLBACK_OPTIONS.length)];
-    });
+    /* ── 4. Time column: leave "TBA" as-is when no time pattern is set ── */
 
     /* ── 5. Sort students table alphabetically then number the rows ── */
     sortAndNumberStudents();
